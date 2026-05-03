@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { Chapter, ChapterMeta, Section } from '@/types'
+import type { Chapter, ChapterMeta, Section, NPC } from '@/types'
+import CreatureLink from '@/components/CreatureLink'
 
 const ACT_LABELS = {
   1: 'Act I — Awakening',
@@ -30,7 +31,31 @@ function Badge({ text, color }: { text: string; color: string }) {
   )
 }
 
-function SectionBlock({ section, showDmNotes }: { section: Section; showDmNotes: boolean }) {
+function renderCreatureLine(line: string, npcs: NPC[]): React.ReactNode {
+  // Only NPCs with stat blocks are linkable. Sort by name length DESC so multi-word
+  // names match before substrings (e.g. "Wrath-Infused Veteran" before "Veteran").
+  const linkable = npcs.filter((n) => n.statBlock).sort((a, b) => b.name.length - a.name.length)
+  for (const npc of linkable) {
+    const escaped = npc.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(`\\b${escaped}s?\\b`, 'i')
+    const match = line.match(regex)
+    if (match && match.index !== undefined) {
+      const before = line.slice(0, match.index)
+      const matched = match[0]
+      const after = line.slice(match.index + matched.length)
+      return (
+        <>
+          {before}
+          <CreatureLink npc={npc} displayText={matched} />
+          {after}
+        </>
+      )
+    }
+  }
+  return line
+}
+
+function SectionBlock({ section, showDmNotes, npcs }: { section: Section; showDmNotes: boolean; npcs: NPC[] }) {
   const barColor = TYPE_COLORS[section.type] || 'var(--gold-dim)'
   return (
     <div style={{ marginBottom: '1.5rem' }}>
@@ -56,7 +81,11 @@ function SectionBlock({ section, showDmNotes }: { section: Section; showDmNotes:
       {section.creatures && section.creatures.length > 0 && (
         <div style={{ margin: '0.5rem 0' }}>
           <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.72rem', color: '#c0392b', letterSpacing: '0.08em', display: 'block', marginBottom: '0.3rem' }}>CREATURES</span>
-          {section.creatures.map((c, i) => <p key={i} style={{ margin: '0.15rem 0 0.15rem 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>• {c}</p>)}
+          {section.creatures.map((c, i) => (
+            <p key={i} style={{ margin: '0.15rem 0 0.15rem 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+              • {renderCreatureLine(c, npcs)}
+            </p>
+          ))}
         </div>
       )}
       {section.tactics && (
@@ -84,9 +113,11 @@ export default function ChaptersPage() {
   const [loading, setLoading] = useState(true)
   const [chapterLoading, setChapterLoading] = useState(false)
   const [showDmNotes, setShowDmNotes] = useState(true)
+  const [npcs, setNpcs] = useState<NPC[]>([])
 
   useEffect(() => {
     fetch('/api/chapters').then((r) => r.json()).then((data) => { setIndex(data); setLoading(false) })
+    fetch('/api/npcs').then((r) => r.json()).then(setNpcs).catch(() => {})
   }, [])
 
   const loadChapter = useCallback(async (num: number) => {
@@ -166,7 +197,7 @@ export default function ChaptersPage() {
               </div>
             </div>
             {/* Sections */}
-            {activeChapter.sections.map((section, i) => <SectionBlock key={i} section={section} showDmNotes={showDmNotes} />)}
+            {activeChapter.sections.map((section, i) => <SectionBlock key={i} section={section} showDmNotes={showDmNotes} npcs={npcs} />)}
             {/* Bottom nav */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
               <button className="btn btn-ghost" onClick={() => loadChapter(activeNum - 1)} disabled={activeNum <= 1} style={{ opacity: activeNum <= 1 ? 0.3 : 1 }}>← PREV</button>

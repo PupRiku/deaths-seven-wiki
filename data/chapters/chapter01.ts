@@ -24,7 +24,7 @@ const chapter: Chapter = {
           title: "Encounter 1 — The Goblin Pack",
           type: "encounter",
           content: "A small pack of goblins has been harassing Fizzle. This is the party's first combat in their new bodies — keep it loose and fun.",
-          creatures: ["4 Goblins (MM p.166)"],
+          creatures: ["4 Scavenger Goblins"],
           tactics: "The goblins are opportunistic and cowardly. They scatter if three or more are dropped. Their goal is Fizzle, not the party — they may ignore players in favor of chasing the fairy, which forces the party to intervene.",
           dmNote: "This fight exists to let players discover their randomized builds in a safe environment. Don't rush it. If someone does something surprising with an unusual class/species combo, give it a moment to land.",
         },

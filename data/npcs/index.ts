@@ -710,6 +710,45 @@ export const npcs: NPC[] = [
   // ============================================================
 
   {
+    id: 'scavenger-goblin',
+    name: 'Scavenger Goblin',
+    race: 'Goblinoid (Small Humanoid)',
+    role: 'Wilderness Pest',
+    status: 'Active',
+    alignment: 'Enemy',
+    location: 'Wilderness near Janus',
+    arc: 'Ch.1 — The First Step',
+    description: "A scrawny, scrappy goblin that travels in packs and fights like a coward — stab from cover, scatter when the odds turn. The party's first encounter in their new bodies.",
+    personality: "Opportunistic. Cowardly. Locked onto a target and unwilling to break off until the pack is broken.",
+    notes: [
+      "Ch.1 Encounter 1: pack of 4 harassing Fizzle outside Janus. Low-stakes 'shake the rust off' fight.",
+      "The pack scatters if 3 or more are dropped.",
+      "Their goal is Fizzle, not the party — they will ignore players in favor of the fairy, forcing intervention.",
+      "Stat block source: docs/Creatures/scavengerGoblin.md",
+    ],
+    firstAppearance: 1,
+    statBlock: {
+      name: 'Scavenger Goblin',
+      cr: '1/4',
+      ac: 12,
+      hp: '5 (2d4)',
+      speed: '30ft',
+      str: 8, dex: 12, con: 10, int: 10, wis: 8, cha: 8,
+      skills: ['Stealth +5'],
+      senses: 'Darkvision 60ft, Passive Perception 9',
+      languages: 'Common, Goblin',
+      image: '/images/scavengerGoblin.png',
+      traits: [
+        { name: 'Nimble Escape', description: 'The goblin can take the Disengage or Hide action as a bonus action on each of its turns.' },
+      ],
+      actions: [
+        { name: 'Dagger', description: 'Melee Weapon Attack: +3 to hit, reach 5ft, one target. Hit: 3 (1d4+1) piercing damage.' },
+      ],
+    },
+    tags: ['creature', 'goblin', 'ch1', 'wilderness'],
+  },
+
+  {
     id: 'coin-golem',
     name: 'Coin Golem',
     race: 'Construct',
