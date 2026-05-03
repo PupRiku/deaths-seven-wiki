@@ -58,7 +58,7 @@ const chapter: Chapter = {
           title: "Director Valerius — The Interrogation",
           type: "scene",
           content: "The party is brought to the top floor of the Scions' Fortress. Director Valerius is already at her desk. She does not look up immediately.",
-          boxedText: "'Contaminants. From the forbidden pass. Claiming a divine imperative. And a fairy in a box.' She sets down the report. 'How quaint. You have two options. You can be processed — and your bodies given to our research division. Or you can tell me, precisely, who you are, why you are here, and most importantly, what the Obitus Scholare wants with that stone.'",
+          boxedText: "'Contaminants. From the forbidden pass. Claiming a divine imperative. And a pixie in a box.' She sets down the report. 'How quaint. You have two options. You can be processed — and your bodies given to our research division. Or you can tell me, precisely, who you are, why you are here, and most importantly, what the Obitus Scholare wants with that stone.'",
           keyInfo: [
             "Valerius is not hostile — she is analytical. She wants information and the party to believe she holds all the cards. She mostly does.",
             "DC 15 Insight: she is more interested in the Relic Stone than the party. They are a delivery mechanism.",

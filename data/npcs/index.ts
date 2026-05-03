@@ -14,13 +14,13 @@ export const npcs: NPC[] = [
   {
     id: 'fizzle',
     name: 'Fizzle',
-    race: 'Fairy',
+    race: 'Pixie',
     role: "Nyx's Messenger / Party Guide",
     status: 'Active',
     alignment: 'Ally',
     location: 'With the Party',
     arc: 'All',
-    description: "A small, chaotic, deeply sincere fairy who has been with the party since they woke up in a field outside Janus being chased by goblins. Nyx's official messenger and the party's guide — though she admits she ended up following them instead of guiding them.",
+    description: "A small, chaotic, deeply sincere pixie who has been with the party since they woke up in a field outside Janus being chased by goblins. Nyx's official messenger and the party's guide — though she admits she ended up following them instead of guiding them.",
     personality: "Cheerful, occasionally dramatic, genuinely caring. Covers distress with chatter. Falls asleep mid-sentence when exhausted. Cannot enter the Aspirant's mountain.",
     notes: [
       "Knew the shape of Nyx's plan from the beginning but not all the details",
@@ -30,8 +30,35 @@ export const npcs: NPC[] = [
       "Waits on Nyx's section of the mountain during the trials. Is there when they descend.",
       "Final line of the campaign belongs to her: 'Good morning. What do you want to do today?'",
       "Has a collection of blink pups she is extremely attached to",
+      'Stat block source: docs/NPCs/fizzle.md',
     ],
     firstAppearance: 1,
+    statBlock: {
+      name: 'Fizzle',
+      cr: '1/4',
+      ac: 15,
+      hp: '20 (8d4)',
+      speed: '10ft, fly 40ft',
+      str: 2, dex: 20, con: 8, int: 10, wis: 14, cha: 15,
+      skills: ['Perception +4', 'Stealth +5'],
+      senses: 'Passive Perception 14',
+      languages: 'Common, Sylvan',
+      image: '/images/fizzle.png',
+      traits: [
+        {
+          name: 'Innate Spellcasting',
+          description: [
+            "The pixie's innate spellcasting ability is Charisma (spell save DC 12). It can innately cast the following spells, requiring only its pixie dust as a component:",
+            'At will: druidcraft.',
+            '1/day each: confusion, dancing lights, detect evil and good, detect thoughts, dispel magic, entangle, fly, phantasmal force, polymorph, sleep.',
+          ],
+        },
+        { name: 'Magic Resistance', description: 'Fizzle has advantage on saving throws against spells and other magical effects.' },
+      ],
+      actions: [
+        { name: 'Superior Invisibility', description: 'As an action, Fizzle magically turns invisible until its concentration ends (as if concentrating on a spell). Any equipment the pixie wears or carries is invisible with it.' },
+      ],
+    },
     tags: ['ally', 'nyx', 'guide', 'recurring', 'comic relief'],
   },
 
@@ -723,7 +750,7 @@ export const npcs: NPC[] = [
     notes: [
       "Ch.1 Encounter 1: pack of 4 harassing Fizzle outside Janus. Low-stakes 'shake the rust off' fight.",
       "The pack scatters if 3 or more are dropped.",
-      "Their goal is Fizzle, not the party — they will ignore players in favor of the fairy, forcing intervention.",
+      "Their goal is Fizzle, not the party — they will ignore players in favor of the pixie, forcing intervention.",
       "Stat block source: docs/Creatures/scavengerGoblin.md",
     ],
     firstAppearance: 1,

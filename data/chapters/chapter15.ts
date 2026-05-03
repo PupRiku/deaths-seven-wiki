@@ -109,7 +109,7 @@ const chapter: Chapter = {
             "THE REAL VORIAN: His fate is unknown. He may be alive somewhere in the palace dungeons. Finding him — if he is alive — would give the party a credible witness.",
             "NO LEVEL UP: This chapter has no advancement. The party enters Chapter 16 at Level 16, exactly as they left Chapter 15. They carry the letter. They carry Leocraes. They carry what they now know.",
           ],
-          dmNote: "Fizzle saying 'He's going to be okay' to herself all night and then saying it to someone else when they wake is her at her most human. She has been the party's guide and their chaos fairy and their window into Nyx since the first field. She sat up all night saying a thing into the dark because saying it helped. That is Fizzle. That is the end of the chapter.",
+          dmNote: "Fizzle saying 'He's going to be okay' to herself all night and then saying it to someone else when they wake is her at her most human. She has been the party's guide and their chaos pixie and their window into Nyx since the first field. She sat up all night saying a thing into the dark because saying it helped. That is Fizzle. That is the end of the chapter.",
         },
       ],
     }

@@ -34,7 +34,7 @@ const chapter: Chapter = {
         'A voice reaches you first — high-pitched, frantic, getting louder very fast. Then you see her: a tiny winged figure streaking across the field toward you at full speed, looking over her shoulder more than she is looking where she is going. Behind her, four goblins are giving enthusiastic chase. She spots you, makes a very sharp turn that nearly sends her tumbling, and dives directly behind the nearest party member. A small hand grabs a fistful of whatever clothing is available. "You!" she says, slightly out of breath. "Excellent! You look like you can handle this! Fighting! That\'s a thing, right? You fight them! Now please!" She peeks around your shoulder at the goblins, who have spotted you and slowed to a predatory lope. "I\'m Fizzle, by the way. We can do introductions after."',
       creatures: ['4 Scavenger Goblins'],
       tactics:
-        'The goblins are opportunistic and cowardly. They scatter if three or more are dropped. Their goal is Fizzle, not the party — they may ignore players in favor of chasing the fairy, which forces the party to intervene.',
+        'The goblins are opportunistic and cowardly. They scatter if three or more are dropped. Their goal is Fizzle, not the party — they may ignore players in favor of chasing the pixie, which forces the party to intervene.',
       dmNote:
         "Initiative is called the moment the table is ready — Fizzle's 'we can do introductions after' is the natural cue. The goblins have spotted the party and are approaching. This fight exists to let players discover their randomized builds in a low-stakes environment. Let it be chaotic and fun.",
     },
