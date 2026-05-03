@@ -28,7 +28,7 @@ export default function Home() {
         <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '0.5rem' }}>
           ☽ ✦ ☾
         </div>
-        <h1 style={{ marginBottom: '0.5rem' }}>The Deadly Seven</h1>
+        <h1 style={{ marginBottom: '0.5rem' }}>Death's Seven</h1>
         <p style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.12em', fontStyle: 'italic' }}>
           Dungeon Master Campaign Bible
         </p>

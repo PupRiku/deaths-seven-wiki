@@ -1,6 +1,6 @@
-# The Deadly Seven — DM Wiki
+# Death's Seven — DM Wiki
 
-A local Next.js web application for running The Deadly Seven D&D 5e campaign.
+A local Next.js web application for running Death's Seven D&D 5e campaign.
 
 ## Features
 

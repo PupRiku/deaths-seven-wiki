@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   let output = ''
 
   if (format === 'md') {
-    output += `# The Deadly Seven — Session Notes\n\n`
+    output += `# Death's Seven — Session Notes\n\n`
     output += `*Exported: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}*\n\n`
     output += `---\n\n`
 

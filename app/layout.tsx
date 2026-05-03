@@ -3,8 +3,8 @@ import './globals.css'
 import Sidebar from '@/components/ui/Sidebar'
 
 export const metadata: Metadata = {
-  title: 'The Deadly Seven — DM Wiki',
-  description: 'Campaign bible and session tools for The Deadly Seven',
+  title: 'Death's Seven — DM Wiki',
+  description: 'Campaign bible and session tools for Death's Seven',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

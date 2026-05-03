@@ -28,7 +28,7 @@ export default function Sidebar() {
     <aside className="wiki-sidebar">
       {/* Logo */}
       <div className="nav-logo">
-        <div className="nav-logo-title">The Deadly Seven</div>
+        <div className="nav-logo-title">Death's Seven</div>
         <div className="nav-logo-sub">☽ DM WIKI ✦ CAMPAIGN BIBLE ☾</div>
       </div>
 
