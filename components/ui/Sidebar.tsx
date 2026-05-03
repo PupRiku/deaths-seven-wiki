@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const NAV = [
   {
@@ -19,10 +19,10 @@ const NAV = [
       { icon: '📝', label: 'Session Log', href: '/session-log' },
     ],
   },
-]
+];
 
 export default function Sidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <aside className="wiki-sidebar">
@@ -50,14 +50,34 @@ export default function Sidebar() {
       ))}
 
       {/* Bottom status */}
-      <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--border)' }}>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+      <div
+        style={{
+          marginTop: 'auto',
+          padding: '1rem',
+          borderTop: '1px solid var(--border)',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: '0.65rem',
+            color: 'var(--text-muted)',
+            letterSpacing: '0.1em',
+          }}
+        >
           ✦ THE DEADLY SEVEN ✦
         </div>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: '0.6rem',
+            color: 'var(--text-muted)',
+            marginTop: '0.2rem',
+          }}
+        >
           Levels 3–20
         </div>
       </div>
     </aside>
-  )
+  );
 }
