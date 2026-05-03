@@ -52,6 +52,12 @@ function StatBlock({ npc }: { npc: NPC }) {
 
   return (
     <div style={{ background: '#0f0c09', border: `1px solid ${accent}33`, borderTop: `2px solid ${accent}`, borderRadius: '4px', padding: '1rem', marginTop: '1rem' }}>
+      {sb.image && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={sb.image} alt={sb.name} style={{ maxWidth: '100%', maxHeight: '280px', objectFit: 'contain', borderRadius: '3px', border: `1px solid ${accent}22` }} />
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
         <div>
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.85rem', color: accent, letterSpacing: '0.06em' }}>{sb.name}</div>
@@ -67,6 +73,24 @@ function StatBlock({ npc }: { npc: NPC }) {
           <StatRow key={stat} label={stat.toUpperCase()} value={sb[stat]} />
         ))}
       </div>
+
+      {/* Metadata: skills / senses / languages */}
+      {(sb.skills?.length || sb.senses || sb.languages || sb.savingThrows?.length) && (
+        <div style={{ marginBottom: '0.5rem', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          {sb.savingThrows && sb.savingThrows.length > 0 && (
+            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.72rem' }}>Saving Throws </strong>{sb.savingThrows.join(', ')}</div>
+          )}
+          {sb.skills && sb.skills.length > 0 && (
+            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.72rem' }}>Skills </strong>{sb.skills.join(', ')}</div>
+          )}
+          {sb.senses && (
+            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.72rem' }}>Senses </strong>{sb.senses}</div>
+          )}
+          {sb.languages && (
+            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.72rem' }}>Languages </strong>{sb.languages}</div>
+          )}
+        </div>
+      )}
 
       {/* Traits */}
       {sb.traits && sb.traits.length > 0 && (
@@ -85,6 +109,32 @@ function StatBlock({ npc }: { npc: NPC }) {
         <div style={{ marginBottom: '0.5rem' }}>
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>ACTIONS</div>
           {sb.actions.map((a, i) => (
+            <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
+              {a.description}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Bonus Actions */}
+      {sb.bonusActions && sb.bonusActions.length > 0 && (
+        <div style={{ marginBottom: '0.5rem' }}>
+          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>BONUS ACTIONS</div>
+          {sb.bonusActions.map((a, i) => (
+            <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
+              {a.description}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Reactions */}
+      {sb.reactions && sb.reactions.length > 0 && (
+        <div style={{ marginBottom: '0.5rem' }}>
+          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>REACTIONS</div>
+          {sb.reactions.map((a, i) => (
             <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
               {a.description}

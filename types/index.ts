@@ -98,6 +98,7 @@ export interface StatBlock {
   reactions?: { name: string; description: string }[]
   legendaryActions?: { name: string; description: string }[]
   legendaryResistances?: number
+  image?: string // Path under /public — e.g. '/images/scavengerGoblin.png'
 }
 
 // --- SINS ---
