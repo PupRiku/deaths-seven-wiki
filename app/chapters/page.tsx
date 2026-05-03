@@ -102,6 +102,30 @@ function SectionBlock({ section, showDmNotes, npcs }: { section: Section; showDm
           <p>{section.dmNote}</p>
         </div>
       )}
+      {section.bucket && (
+        <div style={{ margin: '0.75rem 0', paddingLeft: '0.75rem', borderLeft: '2px solid var(--cyan)' }}>
+          {(['discovery', 'encounter', 'aftermath'] as const).map((key) => {
+            const text = section.bucket?.[key]
+            if (!text) return null
+            return (
+              <div key={key} style={{ margin: '0.6rem 0' }}>
+                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.72rem', color: 'var(--cyan)', letterSpacing: '0.08em', display: 'block', marginBottom: '0.3rem' }}>
+                  {key.toUpperCase()}
+                </span>
+                <p style={{ margin: '0 0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.7 }}>
+                  {text}
+                </p>
+              </div>
+            )
+          })}
+          {section.bucket.dmNote && showDmNotes && (
+            <div className="dm-note">
+              <span className="dm-note-label">DM NOTE</span>
+              <p>{section.bucket.dmNote}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
