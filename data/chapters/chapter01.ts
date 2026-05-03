@@ -98,16 +98,16 @@ const chapter: Chapter = {
       boxedText:
         "The cheerful chatter dies in Fizzle's throat. The smell hits you first — acrid, choking smoke. A light wind carries a piece of burnt parchment, a flier for the very inn you just stayed at. As you crest the final hill, you see what remains of Janus. It is a smoldering, black scar on the landscape.",
       dmNote:
-        "No bodies. Only drag marks and footprints. The village was not massacred — it was emptied. Soldiers from Wrath's army (use Guard or Thug stat blocks) are still on site, turning over debris looking for survivors to kill or capture. The party should feel the weight of this before combat begins — the inn they visited, the faces they may have spoken to, all of it gone.",
+        "No bodies. Only drag marks and footprints. The village was not massacred — it was emptied. Soldiers from Wrath's army are still on site, turning over debris looking for survivors to kill or capture. The party should feel the weight of this before combat begins — the inn they visited, the faces they may have spoken to, all of it gone.",
       bucket: {
         discovery:
           'As the party searches the ruins of the inn, a DC 10 Perception check — or simply following a faint sound — leads them to the kitchen, the one room with enough standing walls to offer shelter. Bucket is curled there, nursing a litter of four newborn blink pups. Their eyes are not yet open. They blink sporadically and uncontrollably — tiny flickering teleportations, appearing and disappearing a few inches at a time in the straw. Bucket looks up at the party and wags her tail once, slowly. Then she looks toward the door, waiting.',
         encounter:
-          'This is the moment the thugs arrive. The sound of boots on rubble. The party must fight — but Fizzle, seeing the pups, immediately volunteers to handle them. She spends the entire combat frantically chasing newborn blinking puppies around the ruined kitchen, appearing and disappearing after them, muttering increasingly stressed fairy profanity. She keeps them safe. She is very stressed about it.',
+          'This is the moment the thugs arrive. The sound of boots on rubble. Fizzle, seeing the pups, immediately takes charge — she points at the party and says "You! Check the rest of the town, there could be survivors. Go!" — and turns back to the pups without waiting for a response. The party is sent out into the village. The fight happens out there, away from the inn. Fizzle is never seen again before the party is captured — it is simply assumed she wrangled the pups and got them safely to Nova Clarus. The pups are there when the party eventually arrives. No one fully explains how.',
         aftermath:
-          "When the fight is over and the dust settles, Bucket does not stay with the pups. She moves slowly through the ruins of the inn, sniffing at the places Mama Bess used to stand — the bar, the hearth, the kitchen door. Then she finds the fireplace. She circles once. She lies down. She puts her head on her paws. Fizzle goes very quiet. If asked, she says softly: 'She's not in pain. She's just... done. She was waiting to make sure everyone was okay.' Bucket's tail wags once more. Then she closes her eyes.",
+          'The party does not see what happens next with Bucket or the pups — they are sent out by Fizzle, fight the thugs in the village, and are knocked out and captured before they ever return to the inn. The Bucket scene resolves offscreen. Fizzle handles it. When the party eventually reaches Nova Clarus, the pups are already there — small, blinking, chaotic, alive. Fizzle looks very pleased with herself and does not elaborate.',
         dmNote:
-          "Do not narrate Bucket's death explicitly. Let it happen in the background, gently, while the party is tending to wounds and collecting themselves. Fizzle sensing it is the signal — her going quiet is the tell. The pups are the party's now, whether they planned for it or not. Four newborn blink dogs with no mother, no home, and no idea how their own abilities work yet. What the party does next is up to them entirely.",
+          "Fizzle sending the party away serves two purposes: it separates the pup thread cleanly from the combat, and it puts the party in position to be ambushed and captured — the chapter's closing beat. The party never witnesses Bucket's death directly. If they ask about Bucket later, Fizzle gets quiet and says she was waiting to make sure everyone was okay. That is all she says. The pups arriving at Nova Clarus before the party is one of those things that is never explained and should not be. Fizzle is extremely capable when the situation requires it.",
       },
     },
     {
@@ -160,7 +160,7 @@ const chapter: Chapter = {
       keyInfo: [
         'GUARD PATROL: 10-minute loop. The party can track this rhythm from the cell before escaping.',
         "KEY 2 — GEAR ROOM: All party equipment, neatly stacked. Bonus: a locked strongbox (DC 15 Thieves' Tools) contains 50gp, a potion of healing, and an intercepted Nova Sentinels letter — seeds that Wrath has been watching Nova Clarus longer than anyone knows.",
-        'KEY 3 — BARRACKS (TRAP): DC 14 Perception hears snoring before the door swings open. Inside: 8 sleeping guards. DC 15 Stealth to loot without waking anyone. Tempting, dangerous, optional.',
+        'KEY 3 — BARRACKS (TRAP): DC 14 Perception hears snoring before the door swings open. Inside: 8 sleeping soldiers. DC 15 Stealth to loot without waking anyone. Tempting, dangerous, optional.',
         'KEY 4 — PROVISIONS ROOM: Rations, rope, torches, 2 potions of healing. No roll needed.',
         'THE CAVED-IN SECTION: Looks like a dead end. The partial map hints it exists. Without the map: DC 15 Investigation notices an air current through the rubble. DC 15 group Strength check or 10 minutes of quiet work to clear it. Inside: a locked box. Key 5 opens it. The Relic Stone.',
       ],
@@ -168,21 +168,20 @@ const chapter: Chapter = {
         "The Aspirant's cell sits between the gear room and the caved-in section — the party passes it going both directions. He calls out the first time they pass. His timing is deliberate.",
     },
     {
-      title: 'The Aspirant — The Beggar',
+      title: 'The Beggar',
       type: 'scene',
       content:
-        'As the party moves through the dungeon, a voice calls out from a dark cell.',
+        'As the party moves through the dungeon, a voice calls out from a dark cell. A man — ragged, hollow-eyed, clearly terrified — grips the bars and speaks in an urgent whisper.',
       boxedText:
-        '"No, wait! Please, don\'t leave me! They\'ll kill me... I know things about this place! I know how to get out — and how to get back at that monster! Please!"',
+        "\"Oh thank the gods — please, please don't walk past. I won't slow you down, I just — I know things. About this place. About how to get out. There's an artifact, somewhere in the caved-in section, the guards talk about it — something that can make weapons hurt things they shouldn't be able to hurt. I swear I'm not making this up. Please.\"",
       keyInfo: [
-        "He claims to be a thief who was forced to serve as an informant for Wrath's army.",
-        "He 'overheard' guards talking about a caved-in section holding an old artifact that can make weapons magical — the only way to hurt Wrath.",
-        'He planted the artifact and engineered the cave-in. He needs someone else to retrieve it because he cannot kill what he summoned.',
-        "He refuses to leave his cell when offered: 'If I disappear, the guards will know something's wrong immediately. I'll stay here, keep my head down — it's the only way to make sure you get away clean.'",
-        'He points the party toward a secret exit — a small unguarded fissure in the back of the caves.',
+        'He knows the layout of the dungeon well enough to point them toward the caved-in section and the secret fissure exit.',
+        'He has heard guards talk about an old artifact buried in the cave-in — something that makes weapons magical. This is true. He does not know more than this.',
+        "If offered freedom: he shakes his head quickly. 'No, no — if I disappear they'll know something happened. I'll keep my head down. You go. Just — go, please, before someone comes.'",
+        'He is not coming with them. He is not brave enough and he knows it. This is not a trick — it is just who he is.',
       ],
       dmNote:
-        "Play him as pathetic, grateful, and just credible enough. He is not over-the-top villainous — he is calm, clever, and completely in control of this interaction while appearing to be at the party's mercy. His refusal to leave should feel selfless. It is the opposite. He has no intention of leaving his observation post. The party will likely feel warmly toward him. Good.",
+        'Play him as frightened and small. He is not performing cowardice — he genuinely does not want to die, and staying in the cell is the safest option available to him. His refusal to leave should feel like what it is: a scared man making the least dangerous choice. The party will probably feel a little sorry for him, maybe slightly contemptuous. Good. He is useful, he points them in the right direction, and that is all he is right now.',
     },
     {
       title: 'The Escape & Conclusion',
