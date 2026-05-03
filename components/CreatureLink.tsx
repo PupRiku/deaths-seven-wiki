@@ -14,6 +14,29 @@ const SHOW_DELAY = 120
 const HIDE_DELAY = 150
 const IMAGE_SIZE = 200 // 1:1 image, fixed square in the hover card
 
+// Renders a stat block trait/action body in the hover card. Handles array descriptions
+// (line-broken with hanging indent on wrapped continuation, used for spell lists).
+function HoverEntryBody({ name, description }: { name: string; description: string | string[] }) {
+  const strong = { color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.7rem' } as const
+  if (Array.isArray(description)) {
+    return (
+      <>
+        <span style={{ display: 'block', paddingLeft: '1.25rem', textIndent: '-1.25rem' }}>
+          <strong style={strong}>{name}. </strong>{description[0]}
+        </span>
+        {description.slice(1).map((line, i) => (
+          <span key={i} style={{ display: 'block', paddingLeft: '1.25rem', textIndent: '-1.25rem' }}>{line}</span>
+        ))}
+      </>
+    )
+  }
+  return (
+    <>
+      <strong style={strong}>{name}. </strong>{description}
+    </>
+  )
+}
+
 export default function CreatureLink({ npc, displayText }: Props) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
@@ -158,16 +181,14 @@ export default function CreatureLink({ npc, displayText }: Props) {
       {/* First trait — div, not p, so the card never has block descendants of the host paragraph (portal also keeps it safe) */}
       {sb.traits && sb.traits.length > 0 && (
         <div style={{ margin: '0.25rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-          <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.7rem' }}>{sb.traits[0].name}. </strong>
-          {sb.traits[0].description}
+          <HoverEntryBody name={sb.traits[0].name} description={sb.traits[0].description} />
         </div>
       )}
 
       {/* First action */}
       {sb.actions && sb.actions.length > 0 && (
         <div style={{ margin: '0.25rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-          <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.7rem' }}>{sb.actions[0].name}. </strong>
-          {sb.actions[0].description}
+          <HoverEntryBody name={sb.actions[0].name} description={sb.actions[0].description} />
         </div>
       )}
 

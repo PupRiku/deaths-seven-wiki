@@ -45,6 +45,30 @@ function StatRow({ label, value }: { label: string; value: number }) {
   )
 }
 
+// Renders a stat block trait/action body. Handles both plain string descriptions and
+// array-of-strings descriptions (used for spell lists where each line should break,
+// with a hanging indent on wrapped continuation).
+function EntryBody({ name, description }: { name: string; description: string | string[] }) {
+  const strong = { color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' } as const
+  if (Array.isArray(description)) {
+    return (
+      <>
+        <span style={{ display: 'block', paddingLeft: '1.5rem', textIndent: '-1.5rem' }}>
+          <strong style={strong}>{name}. </strong>{description[0]}
+        </span>
+        {description.slice(1).map((line, i) => (
+          <span key={i} style={{ display: 'block', paddingLeft: '1.5rem', textIndent: '-1.5rem' }}>{line}</span>
+        ))}
+      </>
+    )
+  }
+  return (
+    <>
+      <strong style={strong}>{name}. </strong>{description}
+    </>
+  )
+}
+
 function StatBlock({ npc }: { npc: NPC }) {
   const sb = npc.statBlock
   if (!sb) return null
@@ -97,8 +121,7 @@ function StatBlock({ npc }: { npc: NPC }) {
         <div style={{ marginBottom: '0.5rem' }}>
           {sb.traits.map((t, i) => (
             <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{t.name}. </strong>
-              {t.description}
+              <EntryBody name={t.name} description={t.description} />
             </p>
           ))}
         </div>
@@ -110,8 +133,7 @@ function StatBlock({ npc }: { npc: NPC }) {
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>ACTIONS</div>
           {sb.actions.map((a, i) => (
             <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
-              {a.description}
+              <EntryBody name={a.name} description={a.description} />
             </p>
           ))}
         </div>
@@ -123,8 +145,7 @@ function StatBlock({ npc }: { npc: NPC }) {
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>BONUS ACTIONS</div>
           {sb.bonusActions.map((a, i) => (
             <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
-              {a.description}
+              <EntryBody name={a.name} description={a.description} />
             </p>
           ))}
         </div>
@@ -136,8 +157,7 @@ function StatBlock({ npc }: { npc: NPC }) {
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>REACTIONS</div>
           {sb.reactions.map((a, i) => (
             <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
-              {a.description}
+              <EntryBody name={a.name} description={a.description} />
             </p>
           ))}
         </div>
@@ -149,8 +169,7 @@ function StatBlock({ npc }: { npc: NPC }) {
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>LEGENDARY ACTIONS</div>
           {sb.legendaryActions.map((a, i) => (
             <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
-              {a.description}
+              <EntryBody name={a.name} description={a.description} />
             </p>
           ))}
         </div>

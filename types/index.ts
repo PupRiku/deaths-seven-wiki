@@ -92,11 +92,11 @@ export interface StatBlock {
   conditionImmunities?: string[]
   senses?: string
   languages?: string
-  traits?: { name: string; description: string }[]
-  actions?: { name: string; description: string }[]
-  bonusActions?: { name: string; description: string }[]
-  reactions?: { name: string; description: string }[]
-  legendaryActions?: { name: string; description: string }[]
+  traits?: { name: string; description: string | string[] }[]
+  actions?: { name: string; description: string | string[] }[]
+  bonusActions?: { name: string; description: string | string[] }[]
+  reactions?: { name: string; description: string | string[] }[]
+  legendaryActions?: { name: string; description: string | string[] }[]
   legendaryResistances?: number
   image?: string // Path under /public — e.g. '/images/scavengerGoblin.png'
 }

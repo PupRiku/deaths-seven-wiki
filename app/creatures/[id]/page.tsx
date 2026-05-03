@@ -21,14 +21,34 @@ function StatRow({ label, value }: { label: string; value: number }) {
   )
 }
 
-function ActionList({ heading, items, accent }: { heading: string; items: { name: string; description: string }[]; accent: string }) {
+function EntryBody({ name, description }: { name: string; description: string | string[] }) {
+  const strong = { color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' } as const
+  if (Array.isArray(description)) {
+    return (
+      <>
+        <span style={{ display: 'block', paddingLeft: '1.5rem', textIndent: '-1.5rem' }}>
+          <strong style={strong}>{name}. </strong>{description[0]}
+        </span>
+        {description.slice(1).map((line, i) => (
+          <span key={i} style={{ display: 'block', paddingLeft: '1.5rem', textIndent: '-1.5rem' }}>{line}</span>
+        ))}
+      </>
+    )
+  }
+  return (
+    <>
+      <strong style={strong}>{name}. </strong>{description}
+    </>
+  )
+}
+
+function ActionList({ heading, items, accent }: { heading: string; items: { name: string; description: string | string[] }[]; accent: string }) {
   return (
     <div style={{ marginBottom: '0.6rem' }}>
       <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: accent, letterSpacing: '0.12em', marginBottom: '0.3rem' }}>{heading}</div>
       {items.map((a, i) => (
         <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-          <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{a.name}. </strong>
-          {a.description}
+          <EntryBody name={a.name} description={a.description} />
         </p>
       ))}
     </div>
@@ -127,8 +147,7 @@ export default function CreaturePopout({ params }: { params: Promise<{ id: strin
             <div style={{ marginBottom: '0.6rem' }}>
               {sb.traits.map((t, i) => (
                 <p key={i} style={{ margin: '0.3rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-                  <strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.75rem' }}>{t.name}. </strong>
-                  {t.description}
+                  <EntryBody name={t.name} description={t.description} />
                 </p>
               ))}
             </div>
