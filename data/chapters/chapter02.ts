@@ -1,0 +1,143 @@
+import type { Chapter } from "@/types"
+
+const chapter: Chapter = {
+      number: 2,
+      act: 1 as const,
+      title: "An Unsafe Haven",
+      levelStart: 4,
+      levelEnd: 5,
+      summary: "The party returns to Nova Clarus battered and carrying a wild story. A normal debrief with Nazura becomes something else entirely when the Relic Stone comes out. With Thraggin studying the stone, the party has five days of downtime to explore their new home, earn gold, follow up on the blink pups, and get pulled into the city's quiet political currents — before Thraggin calls them back with news that changes everything.",
+      sections: [
+        {
+          title: "Part 1 — The Debrief",
+          type: "scene",
+          content: "The party returns to Nova Clarus battered, exhausted, and short one village. They are brought to Commander Nazura's office for a standard debrief. She listens. She takes notes. She is professional and controlled — until the Relic Stone comes out.",
+          boxedText: "Nazura leans back in her chair, stylus in hand. 'Right. So. Janus is gone, you were captured by a general who shrugged off everything you threw at him, and you escaped a mountain dungeon with the help of a beggar.' She makes a note. 'Standard Tuesday. Anything else?'",
+          keyInfo: [
+            "Let the party report freely. Nazura responds to each detail with dry professionalism — the destroyed village, General Draven, the dungeon escape, the mysterious beggar who helped them.",
+            "She has a measured, almost skeptical response to everything — until someone produces the Relic Stone.",
+            "THE REVEAL: Nazura stops mid-sentence. She stands. She walks to the door and slides the iron bolt shut. When she turns back, something in her expression has shifted entirely.",
+          ],
+          dmNote: "The normal debrief beat is important — let it run for a few minutes of genuine back-and-forth before the stone appears. Nazura should feel like she is in control of the room right up until she isn't. The bolt sliding home is the sound of the mask coming off.",
+        },
+        {
+          title: "Nazura's Revelation",
+          type: "scene",
+          content: "With the door locked, Nazura drops the pretense entirely and tells the party what she knows.",
+          boxedText: "'Say that again. The stone.' She stands, walks to her office door, and slams the heavy iron bolt into place. She turns back, her eyes burning with a new intensity. 'Lock the door. Now. Where did you get that? We — the Sentinels — have been searching for that relic for months. And my best scout,' she says, glaring at Fizzle, 'just happens to recruit the one team in all the world who stumbles on it? This isn't a test anymore. This is the real thing. I know you were sent by Nyx. Your real mission isn't just to be Sentinels. It's to stop the Sins.'",
+          keyInfo: [
+            "She is one of only three people in Nova Clarus who knows the truth. The others are Prince Leocraes and head researcher Thraggin.",
+            "The Relic Stone is their best hope — but it needs to be studied first. It cannot be rushed and must be kept secret.",
+            "'I need Thraggin to look at this.' She will say nothing more about what it does until he has.",
+            "She formally acknowledges the party's real purpose. They are no longer probationary Sentinels. They are something else.",
+          ],
+          dmNote: "This is a major role-playing scene. Give players space to ask questions, react, and push back. Nazura will answer what she can and admit what she doesn't know. She is not omniscient — she knows the shape of the mission, not all its details. She is genuinely relieved the party exists.",
+        },
+        {
+          title: "Part 2 — Thraggin",
+          type: "scene",
+          content: "Nazura leads the party to the Sentinels' Research and Development wing — a noisy, chaotic workshop smelling of ozone, strange chemicals, and burnt metal. Here they meet Thraggin.",
+          boxedText: "Nazura clears her throat. 'Thraggin, I—' 'Not now, Commander!' the dwarf barks, not looking up. 'I'm on the verge of a resonance cascade, and if you make me lose focus, you'll be sweeping my atoms out of the ventilation shaft!'",
+          keyInfo: [
+            "DM TIP: Roll a d20 for Thraggin's experiment. On a 1 — the device sputters, pops, and explodes with a FOOMP, covering him in harmless bright purple smoke. He emerges, beard singed, and glares at the party. 'Right. What do you want?' On a 20 — the device hums with a perfect, stable blue light. Thraggin looks deeply disappointed. 'Well, that's no fun. Fine. What do you want?'",
+            "Thraggin examines the Relic Stone with a jeweler's loupe. His gruff demeanor melts into pure focused curiosity.",
+            "'This is complex work. It can't be rushed and it must be kept secret. I'll need a few days. Don't bother me. Now get out.'",
+            "Thraggin begins his research. The party has five days.",
+          ],
+          dmNote: "Thraggin is gruff but not unkind. He is the kind of person who shows care through competence rather than warmth. The party will grow to love him. Let this introduction be quick and funny — the d20 roll sets the tone for every future Thraggin scene.",
+        },
+        {
+          title: "Part 3 — Downtime: The Squad House",
+          type: "scene",
+          content: "Nazura has secured the party a squad house in one of Nova Clarus's three districts. Let the players choose which district they want to live in — this is their home base for the rest of the campaign.",
+          keyInfo: [
+            "GREEN DISTRICT: Quieter, residential. Close to the university. Good for casters and scholars.",
+            "BLUE DISTRICT: Military quarter. Close to Sentinel HQ. Efficient, no-nonsense.",
+            "YELLOW DISTRICT: The market district. Loud, busy, full of shops and rumors. Best for rogues and social characters.",
+            "The squad house is modest but comfortable. It has enough rooms for the party and, notably, a fireplace — relevant if they brought the blink pups home.",
+          ],
+          dmNote: "Let the players have a genuine moment of 'this is our place now.' After waking up in a field with nothing, having a home base matters emotionally. If they brought the blink pups, this is a good time to establish where the pups sleep, who feeds them, and which ones have already blinked somewhere inconvenient.",
+        },
+        {
+          title: "Downtime — The Blink Pups",
+          type: "scene",
+          content: "If the party brought Bucket's pups back from Janus, the five days of downtime include the chaos of raising four newborn blink dogs with no control over their abilities in a city apartment.",
+          keyInfo: [
+            "The pups blink randomly and unpredictably — appearing inside cupboards, on top of shelves, occasionally outside the building entirely.",
+            "They need feeding every few hours. They are very loud about it.",
+            "By day three, the pups' eyes are fully open. They have begun to imprint on specific party members.",
+            "A DC 12 Animal Handling check once per day can begin basic bonding. Players who succeed consistently may find a pup has chosen them by the end of the five days.",
+            "Fizzle is both helpful and a liability — she keeps trying to use magic to wrangle them, which startles them into blinking somewhere worse.",
+          ],
+          dmNote: "The pups are a background thread of warmth and chaos running through the downtime. Keep them present but not overwhelming — a pup appearing somewhere ridiculous at an inopportune moment, a bonding scene here and there. They are the emotional anchor of Chapter 2. Do not let them be forgotten.",
+        },
+        {
+          title: "Downtime — Sentinel Side Jobs",
+          type: "scene",
+          content: "Nazura posts jobs on the mission board for the party to earn extra gold during their downtime. These are low-stakes, city-level assignments — good for gold, good for getting to know Nova Clarus.",
+          keyInfo: [
+            "CLEAR THE MINE: Crystal miners in the Green District report strange sounds and missing equipment. Cause: a family of Darkmantles that have nested in an unused shaft. Reward: 30gp each.",
+            "WALL PATROL: A routine overnight patrol of the outer wall. Uneventful — until a scout from Wrath's army is spotted observing the city from a distance and flees. No combat, but a DC 13 Investigation check recovers a dropped satchel with troop movement notes. Reward: 20gp each + the intelligence.",
+            "THE NOISE COMPLAINT: A professor at the university has filed seventeen noise complaints about 'arcane disturbances' from the basement of the east wing. Cause: a student's summoning experiment has gotten badly out of hand. A CR 3 encounter, mostly comedic. Reward: 25gp each and the professor's eternal gratitude.",
+          ],
+          dmNote: "These jobs exist to make Nova Clarus feel like a living city, not just a waypoint. The wall patrol intelligence — troop movement notes from Wrath's scout — is a quiet reminder that Draven's army is not idle. File it away. It will matter in Chapter 9.",
+        },
+        {
+          title: "Downtime — Meeting Leocraes",
+          type: "scene",
+          content: "Sometime during the five days — most naturally while the party is exploring the Yellow District market or visiting the university — they encounter Prince Leocraes. He is not in royal attire. He is trying, with limited success, to be unremarkable.",
+          boxedText: "A half-elf in a plain traveling cloak is examining a fruit stall with the intense focus of someone who has never had to buy their own food before. He picks up an apple, squints at it, and puts it back. Then picks it up again. The stall owner is watching him with barely concealed exasperation.",
+          keyInfo: [
+            "Leocraes introduces himself simply as 'Leo' and only admits his full identity if pressed or if Fizzle blurts it out (she will).",
+            "He is warm, self-deprecating, and genuinely curious about the party — who they are, where they came from, what they make of Nova Clarus.",
+            "He mentions his father's recent behavior in passing, almost to himself: 'He's just not himself lately. Always checking mirrors. It's strange.' He does not dwell on it.",
+            "If the party seems trustworthy, he mentions he may have a job for them in the coming days — off the books, nothing dangerous. 'Just an errand, really.'",
+            "This is the seed for the Goldenweave escort quest.",
+          ],
+          dmNote: "Leocraes should feel like someone the players genuinely want to spend time with before the campaign asks them to fight for him. He is perceptive, kind, and quietly carrying a lot. The mirror comment is the Pride seed — subtle enough to file away, memorable enough to resurface. Do not draw attention to it.",
+        },
+        {
+          title: "Downtime — A Princely Escort",
+          type: "scene",
+          content: "A day or two after their first meeting, Leocraes finds the party again and makes his request. He needs an escort to the artisan village of Goldenweave to collect a commission — his father's new formal robes. He does not want the Royal Guard. He wants them.",
+          boxedText: "'Thanks for coming. This is... a bit personal. My father has ordered a new set of formal robes. From Goldenweave. The cost is... well, it's a lot. I need to go and pay the guild and pick them up, and... I'd like some company I can trust. Not the Royal Guard. Just... you.'",
+          keyInfo: [
+            "Reward: 100gp per character and the Prince's favor.",
+            "THE TRIP: A half-day's ride. Leocraes opens up on the road — about his father, his mother's death, the pressure of the crown. He is right for all the wrong reasons.",
+            "KEY DIALOGUE: 'He's just obsessed with his appearance lately. Always checking himself in mirrors. And these robes... you'll see. It's just... it's not like him.' He is this close to suspecting possession — but attributes it to vanity, not a doppelganger checking its disguise.",
+            "THE ROBES: When the party sees the commission at Goldenweave, the opulence is genuinely shocking. This is not a king's wardrobe. This is something else.",
+            "THE AMBUSH: On the return trip, the caravan is hit by a dozen Bandits and a Bandit Captain. After the fight, a DC 12 Perception check on the bodies reveals a fresh tattoo on each forearm: a grasping hand crushing a handful of coins. The first Greed clue.",
+          ],
+          dmNote: "Lean into Leocraes on the road. This is the chapter where players fall in love with him — which is exactly what Chapter 13 needs. The ambush should feel like a real threat, not a speed bump. The tattoo discovery is the chapter's best piece of environmental storytelling — let a player find it naturally rather than announcing it.",
+        },
+        {
+          title: "Downtime — Personal Scenes",
+          type: "scene",
+          content: "Between the quests and the chaos of the pups, give each player at least one personal downtime scene during the five days. These scenes are short — five to ten minutes each — but do enormous work for character investment.",
+          keyInfo: [
+            "A character visits a district that reminds them of something from their past life — a smell, a sound, a type of building — and cannot place why.",
+            "A character wakes up having dreamed in their old body. They reach for an ability that no longer exists.",
+            "A character attempts something their old self was known for — a skill, a craft, a language — and discovers their new body either cannot do it or does it differently.",
+            "A character finds something in the squad house that belonged to someone before them — a name carved into a doorframe, a forgotten letter, a child's drawing.",
+            "Two characters share a quiet moment — maybe over the pups, maybe over a meal — and realize they are the only people in the world who understand what the other is going through.",
+          ],
+          dmNote: "These are optional but powerful. The randomized reincarnation mechanic is mechanically interesting but it becomes emotionally resonant only through moments like these. Ask each player what their character does with one quiet evening during the five days. Then make something small and specific happen. The campaign will be richer for it.",
+        },
+        {
+          title: "Part 4 — Thraggin's Verdict",
+          type: "scene",
+          content: "On the fifth day, Fizzle arrives at the squad house buzzing with barely contained energy. Thraggin is ready.",
+          boxedText: "'He's ready! He's ready! Thraggin's finished! He's been shouting at everyone all morning, so it must be important! Let's go!'",
+          keyInfo: [
+            "The party arrives at the lab. Thraggin has the Relic Stone laid out on velvet, his notes spread across every surface.",
+            "He confirms it is an enchantment stone of significant power — it will absolutely allow them to forge weapons capable of harming the Sins.",
+            "The bad news: this magic is not arcane or divine. It is visceral. It requires a Soulsmith to activate — a specific and rare kind of practitioner.",
+            "There is only one place he knows of that deals in this kind of soul-smithing. The city of Darkon. 'It's not a pleasant place, from the texts I've read. Nightmarish, in fact. But they're the only ones who can do this. You have to go there.'",
+          ],
+          boxedText2: "'The good news? This stone is a key. It will absolutely, one hundred percent, allow you to forge weapons that can harm these Sins. The bad news? This magic... it's not our magic. It's not arcane, it's not divine. It's visceral. This stone needs to be permanently forged into your weapons by a master. And no one in Nova Clarus can do it. I've only read about one place that deals in this kind of work. The city of Darkon. It's... not a pleasant place, from the texts I've read. Nightmarish, in fact. But they're the only ones who can do this. You have to go there.'",
+          dmNote: "End the chapter here. Thraggin does not soften the news. Let the word 'Darkon' hang in the air. If players ask what Darkon is like, Thraggin can share the DC 10 information from the archive research in Chapter 3 — but only the surface level. The rest they will have to find for themselves. LEVEL UP: Characters advance to Level 5.",
+        },
+      ],
+    }
+
+export default chapter

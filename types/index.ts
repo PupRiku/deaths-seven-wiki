@@ -14,8 +14,14 @@ export interface Section {
   boxedText2?: string
   keyInfo?: string[]
   creatures?: string[]
-  tactics?: string[]
+  tactics?: string | string[]
   dmNote?: string
+  bucket?: {
+    discovery: string
+    encounter?: string
+    aftermath?: string
+    dmNote: string
+  }
 }
 
 export interface Chapter {
@@ -25,10 +31,23 @@ export interface Chapter {
   levelStart: number
   levelEnd: number
   summary: string
-  sessions: number
+  sessions?: number
   sections: Section[]
   tags?: string[]
 }
+
+// Lightweight chapter metadata for index/navigation (no section content)
+export interface ChapterMeta {
+  number: number
+  title: string
+  act: 1 | 2 | 3
+  levelStart: number
+  levelEnd: number
+  sectionCount: number
+  summary: string
+}
+
+
 
 // --- NPCS ---
 
