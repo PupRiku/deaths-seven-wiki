@@ -749,6 +749,47 @@ export const npcs: NPC[] = [
   },
 
   {
+    id: 'wrathbound-soldier',
+    name: 'Wrathbound Soldier',
+    race: 'Humanoid (Wrath-touched)',
+    role: "Draven's Foot Soldier",
+    status: 'Active',
+    alignment: 'Enemy',
+    location: 'The Ruins of Janus',
+    arc: 'Ch.1 — The First Step',
+    description: "A thug from Draven's army, infused with a fragment of Wrath. Eyes glow red. Steam rises from the skin. Fights aggressively, without mercy, and does not retreat.",
+    personality: "No fear. No restraint. The Wrath-infusion strips off whatever hesitation a normal soldier might have — they fight until they fall.",
+    notes: [
+      "Ch.1 Encounter 2: a squad of 4 combs the ruins of Janus for survivors. They precede General Draven's arrival.",
+      "Pack Tactics — they fight better in groups. Splitting them up is the easiest way to blunt the encounter.",
+      "Reduce the count if the party is struggling — Draven's reveal lands harder if they win this one cleanly.",
+      "Stat block source: docs/Creatures/wrathboundSoldier.md",
+    ],
+    firstAppearance: 1,
+    statBlock: {
+      name: 'Wrathbound Soldier',
+      cr: '1/2',
+      ac: 11,
+      hp: '22 (5d8+2)',
+      speed: '30ft',
+      str: 15, dex: 11, con: 14, int: 10, wis: 10, cha: 11,
+      skills: ['Intimidation +2'],
+      senses: 'Passive Perception 10',
+      languages: 'Common',
+      image: '/images/wrathboundSoldier.png',
+      traits: [
+        { name: 'Pack Tactics', description: "The soldier has advantage on an attack roll against a creature if at least one of the soldier's allies is within 5ft of the creature and the ally isn't incapacitated." },
+      ],
+      actions: [
+        { name: 'Multiattack', description: 'The soldier makes two mace attacks.' },
+        { name: 'Mace', description: 'Melee Weapon Attack: +4 to hit, reach 5ft, one target. Hit: 5 (1d6+2) bludgeoning damage.' },
+        { name: 'Heavy Crossbow', description: 'Ranged Weapon Attack: +2 to hit, range 100/400ft, one target. Hit: 5 (1d10) piercing damage.' },
+      ],
+    },
+    tags: ['creature', 'wrath', 'soldier', 'ch1', 'janus'],
+  },
+
+  {
     id: 'coin-golem',
     name: 'Coin Golem',
     race: 'Construct',

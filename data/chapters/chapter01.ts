@@ -115,9 +115,7 @@ const chapter: Chapter = {
       type: 'encounter',
       content:
         "A squad of Wrath's soldiers is combing the ruins for survivors. After the party defeats them, their leader arrives.",
-      creatures: [
-        '6 Guards (MM p.347) or Thugs (MM p.350) — Wrath-Infused (eyes glow red, steam rises from skin)',
-      ],
+      creatures: ['4 Wrathbound Soldiers'],
       tactics:
         'The soldiers fight aggressively and without mercy. They do not retreat. If the party seems to be struggling, reduce the number. This fight should be winnable but feel serious.',
       dmNote:
