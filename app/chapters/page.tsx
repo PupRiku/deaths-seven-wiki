@@ -10,22 +10,37 @@ const ACT_LABELS = {
   3: 'Act III — The Reckoning',
 } as const
 
-const ACT_COLORS = {
+// Two parallel forms: CSS vars for live theming, hex for opacity-based tinting (badges).
+const ACT_COLORS_VAR = {
   1: 'var(--cyan)',
   2: 'var(--orange)',
   3: 'var(--purple)',
 } as const
 
-const TYPE_COLORS: Record<string, string> = {
-  scene: '#2980b9',
-  encounter: '#c0392b',
-  prose: 'var(--gold-dim)',
-  npc: 'var(--purple)',
+const ACT_COLORS_HEX = {
+  1: '#22d3ee',
+  2: '#e8834a',
+  3: '#8b5cf6',
+} as const
+
+const TYPE_COLORS_HEX: Record<string, string> = {
+  scene: '#60a5fa',     // status-info
+  encounter: '#f87171', // status-danger
+  prose: '#7a4a2a',     // orange-dim
+  npc: '#8b5cf6',       // purple
 }
 
-function Badge({ text, color }: { text: string; color: string }) {
+function rgbaFromHex(hex: string, alpha: number) {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+function Badge({ text, hex }: { text: string; hex: string }) {
   return (
-    <span className="badge" style={{ color, borderColor: color + '55', background: color + '11' }}>
+    <span className="badge" style={{ color: hex, borderColor: rgbaFromHex(hex, 0.25), background: rgbaFromHex(hex, 0.08) }}>
       {text}
     </span>
   )
@@ -56,15 +71,15 @@ function renderCreatureLine(line: string, npcs: NPC[]): React.ReactNode {
 }
 
 function SectionBlock({ section, showDmNotes, npcs }: { section: Section; showDmNotes: boolean; npcs: NPC[] }) {
-  const barColor = TYPE_COLORS[section.type] || 'var(--gold-dim)'
+  const typeHex = TYPE_COLORS_HEX[section.type] || '#7a4a2a'
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <div className="section-header">
-        <div className={`section-type-bar ${section.type}`} style={{ background: barColor }} />
-        <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.82rem', color: 'var(--text-accent)', letterSpacing: '0.08em', fontWeight: 600 }}>
+        <div className={`section-type-bar ${section.type}`} />
+        <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.875rem', color: 'var(--text-accent)', letterSpacing: '0.08em', fontWeight: 600 }}>
           {section.title}
         </span>
-        <Badge text={section.type.toUpperCase()} color={barColor} />
+        <Badge text={section.type.toUpperCase()} hex={typeHex} />
       </div>
       {section.content && <p style={{ margin: '0 0 0.75rem', lineHeight: 1.75, color: 'var(--text-primary)' }}>{section.content}</p>}
       {section.boxedText && <div className="boxed-text">{section.boxedText}</div>}
@@ -73,16 +88,16 @@ function SectionBlock({ section, showDmNotes, npcs }: { section: Section; showDm
         <div style={{ margin: '0.5rem 0' }}>
           {section.keyInfo.map((info, i) => (
             <div key={i} className="key-info-item">
-              <p style={{ margin: 0, lineHeight: 1.65, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>{info}</p>
+              <p style={{ margin: 0, lineHeight: 1.65, color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>{info}</p>
             </div>
           ))}
         </div>
       )}
       {section.creatures && section.creatures.length > 0 && (
         <div style={{ margin: '0.5rem 0' }}>
-          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.72rem', color: '#c0392b', letterSpacing: '0.08em', display: 'block', marginBottom: '0.3rem' }}>CREATURES</span>
+          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: 'var(--status-danger)', letterSpacing: '0.12em', display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>CREATURES</span>
           {section.creatures.map((c, i) => (
-            <p key={i} style={{ margin: '0.15rem 0 0.15rem 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            <p key={i} style={{ margin: '0.15rem 0 0.15rem 1rem', color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
               • {renderCreatureLine(c, npcs)}
             </p>
           ))}
@@ -90,8 +105,8 @@ function SectionBlock({ section, showDmNotes, npcs }: { section: Section; showDm
       )}
       {section.tactics && (
         <div style={{ margin: '0.5rem 0' }}>
-          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.72rem', color: '#f39c12', letterSpacing: '0.08em', display: 'block', marginBottom: '0.3rem' }}>TACTICS</span>
-          <p style={{ margin: '0 0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.65 }}>
+          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: 'var(--status-warning)', letterSpacing: '0.12em', display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>TACTICS</span>
+          <p style={{ margin: '0 0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.9375rem', lineHeight: 1.65 }}>
             {Array.isArray(section.tactics) ? section.tactics.join(' ') : section.tactics}
           </p>
         </div>
@@ -109,10 +124,10 @@ function SectionBlock({ section, showDmNotes, npcs }: { section: Section; showDm
             if (!text) return null
             return (
               <div key={key} style={{ margin: '0.6rem 0' }}>
-                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.72rem', color: 'var(--cyan)', letterSpacing: '0.08em', display: 'block', marginBottom: '0.3rem' }}>
+                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: 'var(--cyan)', letterSpacing: '0.12em', display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>
                   {key.toUpperCase()}
                 </span>
-                <p style={{ margin: '0 0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.7 }}>
+                <p style={{ margin: '0 0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.9375rem', lineHeight: 1.7 }}>
                   {text}
                 </p>
               </div>
@@ -161,30 +176,33 @@ export default function ChaptersPage() {
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       {/* Chapter list */}
-      <div style={{ width: '255px', borderRight: '1px solid var(--border)', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto' }}>
-        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-base)', zIndex: 10 }}>
-          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.72rem', color: 'var(--text-muted)', letterSpacing: '0.12em' }}>ALL CHAPTERS</span>
-          <button className={`btn ${showDmNotes ? 'btn-primary' : 'btn-ghost'}`} style={{ fontSize: '0.62rem', padding: '0.2rem 0.6rem' }} onClick={() => setShowDmNotes(!showDmNotes)}>
+      <div style={{ width: '255px', borderRight: '0.5px solid var(--border)', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto' }}>
+        <div style={{ padding: '0.75rem 1rem', borderBottom: '0.5px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-base)', zIndex: 10 }}>
+          <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', color: 'var(--text-muted)', letterSpacing: '0.15em', fontWeight: 600 }}>ALL CHAPTERS</span>
+          <button className={`btn ${showDmNotes ? 'btn-primary' : 'btn-ghost'}`} style={{ fontSize: '0.6875rem', padding: '0.25rem 0.6rem' }} onClick={() => setShowDmNotes(!showDmNotes)}>
             {showDmNotes ? '● DM ON' : '○ DM OFF'}
           </button>
         </div>
-        {loading ? <div style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading...</div> : (
+        {loading ? <div style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>Loading...</div> : (
           ([1, 2, 3] as const).map((act) => (
             <div key={act}>
-              <div style={{ padding: '0.5rem 1rem', fontFamily: 'var(--font-heading)', fontSize: '0.62rem', letterSpacing: '0.12em', color: ACT_COLORS[act], borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', position: 'sticky', top: '37px', zIndex: 9 }}>
+              <div style={{ padding: '0.5rem 1rem', fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', letterSpacing: '0.15em', color: ACT_COLORS_VAR[act], borderBottom: '0.5px solid var(--border)', background: 'var(--bg-surface)', position: 'sticky', top: '37px', zIndex: 9, fontWeight: 600 }}>
                 {ACT_LABELS[act].toUpperCase()}
               </div>
-              {actChapters(act).map((meta) => (
-                <div key={meta.number} onClick={() => loadChapter(meta.number)} style={{ padding: '0.6rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--border)', background: activeNum === meta.number ? 'var(--bg-hover)' : 'transparent', borderLeft: `2px solid ${activeNum === meta.number ? ACT_COLORS[act] : 'transparent'}`, transition: 'all 0.15s' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.1rem' }}>
-                    <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>CH.{meta.number}</span>
-                    <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.58rem', color: 'var(--text-muted)' }}>Lv{meta.levelStart}–{meta.levelEnd}</span>
+              {actChapters(act).map((meta) => {
+                const isActive = activeNum === meta.number
+                return (
+                  <div key={meta.number} onClick={() => loadChapter(meta.number)} style={{ padding: '0.6rem 1rem', cursor: 'pointer', borderBottom: '0.5px solid var(--border)', background: isActive ? 'var(--bg-raised)' : 'transparent', borderLeft: `2px solid ${isActive ? ACT_COLORS_VAR[act] : 'transparent'}`, transition: 'all 0.15s ease' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.15rem' }}>
+                      <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>CH.{meta.number}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Lv{meta.levelStart}–{meta.levelEnd}</span>
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8125rem', color: isActive ? ACT_COLORS_VAR[act] : 'var(--text-secondary)', letterSpacing: '0.04em', lineHeight: 1.3, fontWeight: 600 }}>
+                      {meta.title}
+                    </div>
                   </div>
-                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: activeNum === meta.number ? ACT_COLORS[act] : 'var(--text-secondary)', letterSpacing: '0.04em', lineHeight: 1.3 }}>
-                    {meta.title}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ))
         )}
@@ -194,36 +212,36 @@ export default function ChaptersPage() {
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {chapterLoading && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: 'var(--text-muted)' }}>
-            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8rem', letterSpacing: '0.12em' }}>Loading Chapter {activeNum}...</span>
+            <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8125rem', letterSpacing: '0.15em', fontWeight: 600 }}>Loading Chapter {activeNum}...</span>
           </div>
         )}
         {activeChapter && !chapterLoading && (
-          <div style={{ maxWidth: '860px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+          <div style={{ maxWidth: '860px', margin: '0 auto', padding: '2rem 1.5rem' }} className="fade-in">
             {/* Nav */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <button className="btn btn-ghost" onClick={() => loadChapter(activeNum - 1)} disabled={activeNum <= 1} style={{ opacity: activeNum <= 1 ? 0.3 : 1 }}>← PREV</button>
-              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.12em' }}>CHAPTER {activeNum} OF 20</span>
+              <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: '0.15em', fontWeight: 600 }}>CHAPTER {activeNum} OF 20</span>
               <button className="btn btn-ghost" onClick={() => loadChapter(activeNum + 1)} disabled={activeNum >= 20} style={{ opacity: activeNum >= 20 ? 0.3 : 1 }}>NEXT →</button>
             </div>
             {/* Header */}
-            <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '2px solid var(--border)' }}>
+            <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '0.5px solid var(--border-bright)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>CHAPTER {activeChapter.number}</span>
-                <Badge text={ACT_LABELS[activeChapter.act]} color={ACT_COLORS[activeChapter.act]} />
+                <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: '0.15em', fontWeight: 600 }}>CHAPTER {activeChapter.number}</span>
+                <Badge text={ACT_LABELS[activeChapter.act]} hex={ACT_COLORS_HEX[activeChapter.act]} />
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
-                  <Badge text={`Start Lv${activeChapter.levelStart}`} color="var(--text-muted)" />
-                  <Badge text={`End Lv${activeChapter.levelEnd}`} color="#27ae60" />
+                  <Badge text={`Start Lv${activeChapter.levelStart}`} hex="#4a5a78" />
+                  <Badge text={`End Lv${activeChapter.levelEnd}`} hex="#34d399" />
                 </div>
               </div>
               <h1 style={{ margin: '0 0 0.75rem', fontSize: '1.6rem' }}>{activeChapter.title}</h1>
-              <div className="card" style={{ borderLeftColor: ACT_COLORS[activeChapter.act] }}>
+              <div className="card" style={{ borderLeftColor: ACT_COLORS_VAR[activeChapter.act] }}>
                 <p style={{ margin: 0, fontStyle: 'italic', color: 'var(--text-secondary)', lineHeight: 1.7 }}>{activeChapter.summary}</p>
               </div>
             </div>
             {/* Sections */}
             {activeChapter.sections.map((section, i) => <SectionBlock key={i} section={section} showDmNotes={showDmNotes} npcs={npcs} />)}
             {/* Bottom nav */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1rem', borderTop: '0.5px solid var(--border)' }}>
               <button className="btn btn-ghost" onClick={() => loadChapter(activeNum - 1)} disabled={activeNum <= 1} style={{ opacity: activeNum <= 1 ? 0.3 : 1 }}>← PREV</button>
               <button className="btn btn-ghost" onClick={() => loadChapter(activeNum + 1)} disabled={activeNum >= 20} style={{ opacity: activeNum >= 20 ? 0.3 : 1 }}>NEXT →</button>
             </div>
