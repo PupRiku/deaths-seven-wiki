@@ -32,7 +32,7 @@ export const SINS = [
     status: 'Active' as const,
     concept: 'City of porcelain masks and eternal purple twilight. The masks suppress awareness of slow vitality drain feeding the Sin.',
     siphonEffect: 'The cold leaves all at once. Warmth — stolen warmth, years of it — pulled into the module. She collapses. Shivering. Like someone who has been asleep for a long time.',
-    hostFate: 'Alive but traumatized. Greater Restoration removes possession trauma. Party chooses. VERSION B: This may be Drazier\'s priestess — coordinate with JT.',
+    hostFate: 'Seraphel is alive but traumatized. Greater Restoration removes possession trauma. Party chooses what happens next. She is a stranger to the party — Drazier\'s priestess is a different woman, alive in Veilmoor.',
     virtueToken: 'A small candle, never-melting. Counters LUST PULL in the Aspirant fight.',
     notes: 'Charm of Vanity CANNOT target Thornvatore. The Sin cannot categorize his desire — to be real. This immunity carries to the Aspirant fight.',
   },
@@ -832,12 +832,12 @@ export const PARTY = [
     homeland: 'Cross-world (Circle of Wyrms origin)',
     specialMechanics: [
       'WRATH RECOGNITION: Draven killed Drazier in his past life. Recognition triggers EITHER: (A) Lust mask failure in Ch.10 — vision of the battle, BBEG\'s face, Advantage on Wrath attacks rest of campaign. OR (B) Ch.14 when Draven removes helmet — cold sudden memory. Coordinate with JT.',
-      'PRIESTESS THREAD: VERSION A — priestess is alive in Veilmoor, does not recognize Drazier. VERSION B — priestess IS the Matriarch\'s host (Seraphel). Coordinate with JT before Ch.10.',
+      'PRIESTESS THREAD: The priestess is alive in Veilmoor as a separate person from the Matriarch — Neutral Good, would not willingly serve Lust. She does not recognize Drazier in his Tiefling form. The Matriarch\'s host is Seraphel, a different woman entirely.',
     ],
     notes: [
       'Holy symbol: she kept it and left it as an offering at Nyx shrines since his death',
       'Mirror fight (Ch.13): past Bronze Dragonborn asks "Did she make it?" Stops fighting for one full round if Drazier answers truthfully.',
-      '"Nyx works strangely." — the priestess (Version A) when she recognizes something in Drazier',
+      '"Nyx works strangely." — the priestess when she recognizes something in Drazier',
       'Final choice: return to Bronze Dragonborn form, or remain as the Tiefling bard?',
     ],
   },
