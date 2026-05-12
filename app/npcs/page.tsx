@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { IconUsers } from '@tabler/icons-react'
 import type { NPC } from '@/types'
+import { rgbaFromHex } from '@/lib/colors'
 
 const ALIGNMENT_COLORS: Record<string, string> = {
   Ally: 'var(--cyan)',
@@ -47,14 +48,6 @@ const STATUS_HEX: Record<string, string> = {
   Deceased: '#f87171',
   Unknown: '#7a4a2a',
   Imprisoned: '#8b5cf6',
-}
-
-function rgbaFromHex(hex: string, alpha: number) {
-  const h = hex.replace('#', '')
-  const r = parseInt(h.slice(0, 2), 16)
-  const g = parseInt(h.slice(2, 4), 16)
-  const b = parseInt(h.slice(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function StatRow({ label, value }: { label: string; value: number }) {

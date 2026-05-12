@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Chapter, ChapterMeta, Section, NPC } from '@/types'
 import CreatureLink from '@/components/CreatureLink'
+import { rgbaFromHex } from '@/lib/colors'
 
 const ACT_LABELS = {
   1: 'Act I — Awakening',
@@ -28,14 +29,6 @@ const TYPE_COLORS_HEX: Record<string, string> = {
   encounter: '#f87171', // status-danger
   prose: '#7a4a2a',     // orange-dim
   npc: '#8b5cf6',       // purple
-}
-
-function rgbaFromHex(hex: string, alpha: number) {
-  const h = hex.replace('#', '')
-  const r = parseInt(h.slice(0, 2), 16)
-  const g = parseInt(h.slice(2, 4), 16)
-  const b = parseInt(h.slice(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function Badge({ text, hex }: { text: string; hex: string }) {
