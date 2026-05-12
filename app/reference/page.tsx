@@ -15,6 +15,13 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id']
 
+// `color-mix` lets us tint either a hex color (#abc123) or a CSS variable
+// (var(--cyan)) uniformly. String concat ("color + '22'") only works for hex
+// and silently produces invalid CSS for CSS-var entries.
+function tint(color: string, percent: number): string {
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`
+}
+
 // ---- SINS TAB ----
 function SinsTab() {
   const [selected, setSelected] = useState(SINS[0])
@@ -26,7 +33,7 @@ function SinsTab() {
           const borderColor = selected.sin === s.sin ? s.color : 'var(--border)'
           return (
           <button key={s.sin} onClick={() => setSelected(s)} style={{
-            background: selected.sin === s.sin ? s.color + '22' : 'var(--bg-surface)',
+            background: selected.sin === s.sin ? tint(s.color, 13) : 'var(--bg-surface)',
             borderTop: `0.5px solid ${borderColor}`,
             borderRight: `0.5px solid ${borderColor}`,
             borderBottom: `0.5px solid ${borderColor}`,
@@ -89,10 +96,10 @@ function TimelineTab() {
       {TIMELINE.map((act) => (
         <div key={act.act} style={{ marginBottom: '1rem' }}>
           <button onClick={() => setOpenAct(openAct === act.act ? 0 : act.act)} style={{
-            width: '100%', background: openAct === act.act ? act.color + '22' : 'var(--bg-surface)',
-            borderTop: `0.5px solid ${act.color}55`,
-            borderRight: `0.5px solid ${act.color}55`,
-            borderBottom: `0.5px solid ${act.color}55`,
+            width: '100%', background: openAct === act.act ? tint(act.color, 13) : 'var(--bg-surface)',
+            borderTop: `0.5px solid ${tint(act.color, 33)}`,
+            borderRight: `0.5px solid ${tint(act.color, 33)}`,
+            borderBottom: `0.5px solid ${tint(act.color, 33)}`,
             borderLeft: `2px solid ${act.color}`,
             borderRadius: 'var(--radius-lg)', padding: '0.6rem 1rem', cursor: 'pointer', textAlign: 'left',
             fontFamily: 'var(--font-heading)', fontSize: '0.8125rem', color: act.color, letterSpacing: '0.08em', fontWeight: 600,
@@ -133,7 +140,7 @@ function PartyTab() {
           const borderColor = selected.player === pc.player ? pc.color : 'var(--border)'
           return (
           <button key={pc.player} onClick={() => setSelected(pc)} style={{
-            background: selected.player === pc.player ? pc.color + '22' : 'var(--bg-surface)',
+            background: selected.player === pc.player ? tint(pc.color, 13) : 'var(--bg-surface)',
             borderTop: `0.5px solid ${borderColor}`,
             borderRight: `0.5px solid ${borderColor}`,
             borderBottom: `0.5px solid ${borderColor}`,
@@ -189,7 +196,7 @@ function PartyTab() {
         </div>
 
         {/* True Reaper */}
-        <div style={{ marginBottom: '0.85rem', padding: '0.6rem 0.85rem', background: 'var(--bg-surface)', borderTop: `0.5px solid ${selected.color}44`, borderRight: `0.5px solid ${selected.color}44`, borderBottom: `0.5px solid ${selected.color}44`, borderLeft: `2px solid ${selected.color}`, borderRadius: 'var(--radius-lg)' }}>
+        <div style={{ marginBottom: '0.85rem', padding: '0.6rem 0.85rem', background: 'var(--bg-surface)', borderTop: `0.5px solid ${tint(selected.color, 27)}`, borderRight: `0.5px solid ${tint(selected.color, 27)}`, borderBottom: `0.5px solid ${tint(selected.color, 27)}`, borderLeft: `2px solid ${selected.color}`, borderRadius: 'var(--radius-lg)' }}>
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', color: selected.color, letterSpacing: '0.12em', marginBottom: '0.25rem', fontWeight: 600 }}>TRUE REAPER</div>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.6 }}>{selected.trueReaper}</p>
         </div>
@@ -234,7 +241,7 @@ function MechanicsTab() {
           const borderColor = selected.id === m.id ? m.color : 'var(--border)'
           return (
           <button key={m.id} onClick={() => setSelected(m)} style={{
-            background: selected.id === m.id ? m.color + '22' : 'var(--bg-surface)',
+            background: selected.id === m.id ? tint(m.color, 13) : 'var(--bg-surface)',
             borderTop: `0.5px solid ${borderColor}`,
             borderRight: `0.5px solid ${borderColor}`,
             borderBottom: `0.5px solid ${borderColor}`,
@@ -255,7 +262,7 @@ function MechanicsTab() {
         </div>
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: '1rem', fontStyle: 'italic' }}>{selected.summary}</p>
         {/* Dense rules block */}
-        <div style={{ background: 'var(--bg-deep)', border: `0.5px solid ${selected.color}33`, borderRadius: 'var(--radius-lg)', padding: '0.75rem 1rem' }}>
+        <div style={{ background: 'var(--bg-deep)', border: `0.5px solid ${tint(selected.color, 20)}`, borderRadius: 'var(--radius-lg)', padding: '0.75rem 1rem' }}>
           {selected.rules.map((rule, i) => (
             <div key={i} style={{ display: 'flex', gap: '0.6rem', padding: '0.3rem 0', borderBottom: i < selected.rules.length - 1 ? '0.5px solid var(--border)' : 'none' }}>
               <span style={{ color: selected.color, fontSize: '0.75rem', flexShrink: 0, marginTop: '0.15rem' }}>▸</span>
