@@ -24,4 +24,5 @@ Open [http://localhost:3000](http://localhost:3000)
 - Next.js 14 + TypeScript
 - Tailwind CSS
 - libSQL (SQLite) for session data persistence
-- Cinzel / EB Garamond typography
+- Cinzel / Inter typography on a Kingdom Hearts-inspired midnight-blue palette (see [docs/VISUAL_LANGUAGE.md](docs/VISUAL_LANGUAGE.md))
+- `@tabler/icons-react` for line iconography
