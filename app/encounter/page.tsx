@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
+import { IconSwords } from '@tabler/icons-react'
 import type { Combatant } from '@/types'
 
 const CONDITIONS = ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion']
@@ -12,6 +13,13 @@ function hpColor(current: number, max: number) {
   if (pct > 0.6) return 'healthy'
   if (pct > 0.25) return 'wounded'
   return 'critical'
+}
+
+function hpTextColor(cls: string, hp: number) {
+  if (hp === 0) return 'var(--status-danger)'
+  if (cls === 'healthy') return 'var(--status-success)'
+  if (cls === 'wounded') return 'var(--status-warning)'
+  return 'var(--status-danger)'
 }
 
 const PRESET_ENEMIES = [
@@ -39,7 +47,6 @@ export default function EncounterPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [showPresets, setShowPresets] = useState(false)
   const [newCombatant, setNewCombatant] = useState({ name: '', initiative: '', hp: '', ac: '', isPlayer: false, isEnemy: true, notes: '' })
-  const [dmNotesVisible, setDmNotesVisible] = useState(false)
 
   const sorted = [...combatants].sort((a, b) => b.initiative - a.initiative)
 
@@ -133,12 +140,13 @@ export default function EncounterPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       {/* Top bar */}
-      <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)', background: 'var(--bg-base)', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: 'var(--text-accent)', letterSpacing: '0.1em' }}>
-          ⚔️ ENCOUNTER TRACKER
+      <div style={{ padding: '0.75rem 1.25rem', borderBottom: '0.5px solid var(--border)', background: 'var(--bg-base)', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.75rem', color: 'var(--text-accent)', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
+          <IconSwords size={16} stroke={1.5} />
+          ENCOUNTER TRACKER
         </div>
         {isActive && (
-          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8rem', color: 'var(--gold)', letterSpacing: '0.1em' }}>
+          <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8125rem', color: 'var(--orange)', letterSpacing: '0.1em', fontWeight: 600 }}>
             ROUND {round}
             {activeCombatant && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.75rem' }}>→ {activeCombatant.name}</span>}
           </div>
@@ -161,9 +169,9 @@ export default function EncounterPage() {
 
       {/* Presets dropdown */}
       {showPresets && (
-        <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+        <div style={{ padding: '0.75rem 1.25rem', borderBottom: '0.5px solid var(--border)', background: 'var(--bg-surface)', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
           {PRESET_ENEMIES.map((p) => (
-            <button key={p.name} className="btn btn-ghost" style={{ fontSize: '0.68rem', borderColor: '#c0392b44', color: '#c0392b' }} onClick={() => addPreset(p)}>
+            <button key={p.name} className="btn btn-ghost" style={{ fontSize: '0.6875rem', borderColor: 'rgba(248, 113, 113, 0.25)', color: 'var(--status-danger)' }} onClick={() => addPreset(p)}>
               + {p.name}
             </button>
           ))}
@@ -172,7 +180,7 @@ export default function EncounterPage() {
 
       {/* Add form */}
       {showAddForm && (
-        <div style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ padding: '0.75rem 1.25rem', borderBottom: '0.5px solid var(--border)', background: 'var(--bg-surface)', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           {[
             { key: 'name', label: 'Name', w: '180px' },
             { key: 'initiative', label: 'Init', w: '60px', type: 'number' },
@@ -180,13 +188,13 @@ export default function EncounterPage() {
             { key: 'ac', label: 'AC', w: '60px', type: 'number' },
           ].map(({ key, label, w, type }) => (
             <div key={key} style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-              <label style={{ fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{label}</label>
+              <label style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', color: 'var(--text-muted)', letterSpacing: '0.1em', fontWeight: 600 }}>{label}</label>
               <input type={type || 'text'} value={(newCombatant as unknown as Record<string, string>)[key]}
                 onChange={(e) => setNewCombatant((n) => ({ ...n, [key]: e.target.value }))}
-                style={{ width: w, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: '3px', padding: '0.3rem 0.5rem', color: 'var(--text-primary)', fontFamily: key === 'name' ? 'var(--font-body)' : 'var(--font-mono)', fontSize: '0.85rem', outline: 'none' }} />
+                style={{ width: w, background: 'var(--bg-raised)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.3rem 0.5rem', color: 'var(--text-primary)', fontFamily: key === 'name' ? 'var(--font-body)' : 'var(--font-mono)', fontSize: '0.85rem', outline: 'none' }} />
             </div>
           ))}
-          <label style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', fontFamily: 'var(--font-heading)', fontSize: '0.65rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <label style={{ display: 'flex', gap: '0.3rem', alignItems: 'center', fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', color: 'var(--text-muted)', cursor: 'pointer', letterSpacing: '0.1em', fontWeight: 600 }}>
             <input type="checkbox" checked={newCombatant.isPlayer} onChange={(e) => setNewCombatant((n) => ({ ...n, isPlayer: e.target.checked, isEnemy: !e.target.checked }))} /> PC
           </label>
           <button className="btn btn-primary" onClick={() => addCombatant()}>Add</button>
@@ -198,9 +206,11 @@ export default function EncounterPage() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
         {combatants.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚔️</div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8rem', letterSpacing: '0.1em' }}>No combatants yet</div>
-            <div style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>Add the party or enemies to begin</div>
+            <div style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'center', color: 'var(--cyan)' }}>
+              <IconSwords size={40} stroke={1.5} />
+            </div>
+            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.8125rem', letterSpacing: '0.12em', fontWeight: 600 }}>No combatants yet</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', marginTop: '0.4rem' }}>Add the party or enemies to begin</div>
           </div>
         )}
 
@@ -212,38 +222,38 @@ export default function EncounterPage() {
 
             return (
               <div key={c.id} className={`combatant-row ${isCurrent ? 'active' : ''} ${c.isPlayer ? 'player' : ''} ${c.isEnemy ? 'enemy' : ''}`}
-                style={{ flexDirection: 'column', gap: '0.5rem', padding: isCurrent ? '0.75rem 1rem' : '0.5rem 0.75rem' }}>
+                style={{ flexDirection: 'column', gap: '0.5rem', padding: isCurrent ? '0.75rem 1rem' : '0.625rem 0.875rem' }}>
                 {/* Main row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
                   {/* Initiative */}
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: isCurrent ? 'var(--gold)' : 'var(--text-secondary)', width: '2.5rem', textAlign: 'center', flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: isCurrent ? 'var(--orange)' : 'var(--text-secondary)', width: '2.5rem', textAlign: 'center', flexShrink: 0, fontWeight: 500 }}>
                     {c.initiative}
                   </div>
 
                   {/* Name */}
-                  <div style={{ flex: 1, fontFamily: c.isPlayer ? 'var(--font-heading)' : 'var(--font-body)', fontSize: '0.95rem', color: isCurrent ? 'var(--gold-bright)' : 'var(--text-primary)' }}>
+                  <div style={{ flex: 1, fontFamily: c.isPlayer ? 'var(--font-heading)' : 'var(--font-body)', fontSize: '0.9375rem', color: isCurrent ? 'var(--orange-bright)' : 'var(--text-primary)', fontWeight: c.isPlayer ? 600 : 400 }}>
                     {c.name}
-                    {c.isPlayer && <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6rem', color: 'var(--cyan)', marginLeft: '0.5rem', letterSpacing: '0.1em' }}>PC</span>}
+                    {c.isPlayer && <span style={{ fontFamily: 'var(--font-heading)', fontSize: '0.625rem', color: 'var(--cyan)', marginLeft: '0.5rem', letterSpacing: '0.12em', fontWeight: 600 }}>PC</span>}
                   </div>
 
                   {/* AC */}
-                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '0.06em', flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', color: 'var(--text-muted)', letterSpacing: '0.08em', flexShrink: 0, fontWeight: 600 }}>
                     AC {c.ac}
                   </div>
 
                   {/* HP controls */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-                    <button onClick={() => updateHP(c.id, -1)} style={{ background: 'none', border: '1px solid #c0392b44', color: '#c0392b', borderRadius: '3px', width: '24px', height: '24px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                    <button onClick={() => updateHP(c.id, -1)} style={{ background: 'none', border: '0.5px solid rgba(248, 113, 113, 0.3)', color: 'var(--status-danger)', borderRadius: 'var(--radius-md)', width: '24px', height: '24px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
                     <div style={{ textAlign: 'center', minWidth: '70px' }}>
                       <input
                         type="number"
                         value={c.hp}
                         onChange={(e) => setHP(c.id, parseInt(e.target.value) || 0)}
-                        style={{ background: 'none', border: 'none', color: c.hp === 0 ? '#c0392b' : hpCls === 'healthy' ? '#27ae60' : hpCls === 'wounded' ? '#f39c12' : '#c0392b', fontFamily: 'var(--font-mono)', fontSize: '0.95rem', width: '40px', textAlign: 'center', outline: 'none' }}
+                        style={{ background: 'none', border: 'none', color: hpTextColor(hpCls, c.hp), fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', width: '40px', textAlign: 'center', outline: 'none', fontWeight: 500 }}
                       />
                       <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>/{c.maxHp}</span>
                     </div>
-                    <button onClick={() => updateHP(c.id, 1)} style={{ background: 'none', border: '1px solid #27ae6044', color: '#27ae60', borderRadius: '3px', width: '24px', height: '24px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                    <button onClick={() => updateHP(c.id, 1)} style={{ background: 'none', border: '0.5px solid rgba(52, 211, 153, 0.3)', color: 'var(--status-success)', borderRadius: 'var(--radius-md)', width: '24px', height: '24px', cursor: 'pointer', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                   </div>
 
                   {/* Remove */}
@@ -258,7 +268,7 @@ export default function EncounterPage() {
                 {/* Conditions */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                   {c.conditions.map((cond) => (
-                    <span key={cond} className="badge" style={{ color: '#f39c12', borderColor: '#f39c1244', background: '#f39c1211', cursor: 'pointer', fontSize: '0.6rem' }}
+                    <span key={cond} className="badge" style={{ color: 'var(--status-warning)', borderColor: 'rgba(251, 191, 36, 0.25)', background: 'rgba(251, 191, 36, 0.08)', cursor: 'pointer' }}
                       onClick={() => toggleCondition(c.id, cond)}>
                       {cond} ×
                     </span>
@@ -266,7 +276,7 @@ export default function EncounterPage() {
                   <select
                     value=""
                     onChange={(e) => { if (e.target.value) toggleCondition(c.id, e.target.value) }}
-                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontFamily: 'var(--font-heading)', fontSize: '0.6rem', cursor: 'pointer', outline: 'none', letterSpacing: '0.08em' }}>
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', cursor: 'pointer', outline: 'none', letterSpacing: '0.1em', fontWeight: 600 }}>
                     <option value="">+ condition</option>
                     {CONDITIONS.filter((cond) => !c.conditions.includes(cond)).map((cond) => (
                       <option key={cond} value={cond}>{cond}</option>
@@ -276,7 +286,7 @@ export default function EncounterPage() {
 
                 {/* Notes */}
                 {c.notes && (
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>{c.notes}</div>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>{c.notes}</div>
                 )}
               </div>
             )
