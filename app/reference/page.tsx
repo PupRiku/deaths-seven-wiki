@@ -24,10 +24,14 @@ function SinsTab() {
     <div style={{ display: 'flex', gap: '1.5rem', height: '100%' }}>
       {/* Sin selector */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '140px', flexShrink: 0 }}>
-        {SINS.map((s) => (
+        {SINS.map((s) => {
+          const borderColor = selected.sin === s.sin ? s.color : 'var(--border)'
+          return (
           <button key={s.sin} onClick={() => setSelected(s)} style={{
             background: selected.sin === s.sin ? s.color + '22' : 'var(--bg-surface)',
-            border: `1px solid ${selected.sin === s.sin ? s.color : 'var(--border)'}`,
+            borderTop: `1px solid ${borderColor}`,
+            borderRight: `1px solid ${borderColor}`,
+            borderBottom: `1px solid ${borderColor}`,
             borderLeft: `3px solid ${s.color}`,
             borderRadius: '3px', padding: '0.5rem 0.75rem', cursor: 'pointer', textAlign: 'left',
             fontFamily: 'var(--font-heading)', fontSize: '0.78rem', color: selected.sin === s.sin ? s.color : 'var(--text-secondary)',
@@ -36,7 +40,8 @@ function SinsTab() {
             {s.sin.toUpperCase()}
             <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>Ch.{s.chapter}</div>
           </button>
-        ))}
+          )
+        })}
         {/* Virtue tokens */}
         <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '3px' }}>
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.6rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '0.35rem' }}>VIRTUE TOKENS</div>
@@ -87,7 +92,10 @@ function TimelineTab() {
         <div key={act.act} style={{ marginBottom: '1rem' }}>
           <button onClick={() => setOpenAct(openAct === act.act ? 0 : act.act)} style={{
             width: '100%', background: openAct === act.act ? act.color + '22' : 'var(--bg-surface)',
-            border: `1px solid ${act.color}55`, borderLeft: `3px solid ${act.color}`,
+            borderTop: `1px solid ${act.color}55`,
+            borderRight: `1px solid ${act.color}55`,
+            borderBottom: `1px solid ${act.color}55`,
+            borderLeft: `3px solid ${act.color}`,
             borderRadius: '4px', padding: '0.6rem 1rem', cursor: 'pointer', textAlign: 'left',
             fontFamily: 'var(--font-heading)', fontSize: '0.8rem', color: act.color, letterSpacing: '0.08em',
             display: 'flex', justifyContent: 'space-between',
@@ -123,10 +131,14 @@ function PartyTab() {
   return (
     <div style={{ display: 'flex', gap: '1rem', height: '100%' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '130px', flexShrink: 0 }}>
-        {PARTY.map((pc) => (
+        {PARTY.map((pc) => {
+          const borderColor = selected.player === pc.player ? pc.color : 'var(--border)'
+          return (
           <button key={pc.player} onClick={() => setSelected(pc)} style={{
             background: selected.player === pc.player ? pc.color + '22' : 'var(--bg-surface)',
-            border: `1px solid ${selected.player === pc.player ? pc.color : 'var(--border)'}`,
+            borderTop: `1px solid ${borderColor}`,
+            borderRight: `1px solid ${borderColor}`,
+            borderBottom: `1px solid ${borderColor}`,
             borderLeft: `3px solid ${pc.color}`, borderRadius: '3px', padding: '0.5rem 0.75rem',
             cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-heading)', fontSize: '0.72rem',
             color: selected.player === pc.player ? pc.color : 'var(--text-secondary)', letterSpacing: '0.06em',
@@ -134,7 +146,8 @@ function PartyTab() {
             {pc.player}
             <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{pc.newRace}</div>
           </button>
-        ))}
+          )
+        })}
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ borderLeft: `3px solid ${selected.color}`, paddingLeft: '1rem', marginBottom: '1rem' }}>
@@ -172,7 +185,7 @@ function PartyTab() {
         </div>
 
         {/* True Reaper */}
-        <div style={{ marginBottom: '0.85rem', padding: '0.6rem 0.85rem', background: 'var(--bg-surface)', border: `1px solid ${selected.color}44`, borderLeft: `3px solid ${selected.color}`, borderRadius: '4px' }}>
+        <div style={{ marginBottom: '0.85rem', padding: '0.6rem 0.85rem', background: 'var(--bg-surface)', borderTop: `1px solid ${selected.color}44`, borderRight: `1px solid ${selected.color}44`, borderBottom: `1px solid ${selected.color}44`, borderLeft: `3px solid ${selected.color}`, borderRadius: '4px' }}>
           <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.62rem', color: selected.color, letterSpacing: '0.12em', marginBottom: '0.25rem' }}>TRUE REAPER</div>
           <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.6 }}>{selected.trueReaper}</p>
         </div>
@@ -213,10 +226,14 @@ function MechanicsTab() {
   return (
     <div style={{ display: 'flex', gap: '1rem', height: '100%' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '160px', flexShrink: 0, overflowY: 'auto' }}>
-        {MECHANICS.map((m) => (
+        {MECHANICS.map((m) => {
+          const borderColor = selected.id === m.id ? m.color : 'var(--border)'
+          return (
           <button key={m.id} onClick={() => setSelected(m)} style={{
             background: selected.id === m.id ? m.color + '22' : 'var(--bg-surface)',
-            border: `1px solid ${selected.id === m.id ? m.color : 'var(--border)'}`,
+            borderTop: `1px solid ${borderColor}`,
+            borderRight: `1px solid ${borderColor}`,
+            borderBottom: `1px solid ${borderColor}`,
             borderLeft: `3px solid ${m.color}`, borderRadius: '3px', padding: '0.45rem 0.75rem',
             cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-heading)', fontSize: '0.7rem',
             color: selected.id === m.id ? m.color : 'var(--text-secondary)', letterSpacing: '0.05em',
@@ -224,7 +241,8 @@ function MechanicsTab() {
             {m.name}
             <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{m.arc.split(' — ')[0]}</div>
           </button>
-        ))}
+          )
+        })}
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ borderLeft: `3px solid ${selected.color}`, paddingLeft: '1rem', marginBottom: '0.85rem' }}>
@@ -254,10 +272,13 @@ function LocationsTab() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '170px', flexShrink: 0, overflowY: 'auto' }}>
         {LOCATIONS.map((loc) => {
           const sinColor = loc.sinArc ? `var(--sin-${loc.sinArc.toLowerCase()})` : 'var(--gold)'
+          const borderColor = selected.id === loc.id ? sinColor : 'var(--border)'
           return (
             <button key={loc.id} onClick={() => setSelected(loc)} style={{
               background: selected.id === loc.id ? sinColor + '22' : 'var(--bg-surface)',
-              border: `1px solid ${selected.id === loc.id ? sinColor : 'var(--border)'}`,
+              borderTop: `1px solid ${borderColor}`,
+              borderRight: `1px solid ${borderColor}`,
+              borderBottom: `1px solid ${borderColor}`,
               borderLeft: `3px solid ${sinColor}`, borderRadius: '3px', padding: '0.45rem 0.75rem',
               cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-heading)', fontSize: '0.7rem',
               color: selected.id === loc.id ? sinColor : 'var(--text-secondary)', letterSpacing: '0.04em', lineHeight: 1.3,
@@ -306,10 +327,14 @@ function FactionsTab() {
   return (
     <div style={{ display: 'flex', gap: '1rem', height: '100%' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '150px', flexShrink: 0 }}>
-        {FACTIONS.map((f) => (
+        {FACTIONS.map((f) => {
+          const borderColor = selected.id === f.id ? f.color : 'var(--border)'
+          return (
           <button key={f.id} onClick={() => setSelected(f)} style={{
             background: selected.id === f.id ? f.color + '22' : 'var(--bg-surface)',
-            border: `1px solid ${selected.id === f.id ? f.color : 'var(--border)'}`,
+            borderTop: `1px solid ${borderColor}`,
+            borderRight: `1px solid ${borderColor}`,
+            borderBottom: `1px solid ${borderColor}`,
             borderLeft: `3px solid ${f.color}`, borderRadius: '3px', padding: '0.5rem 0.75rem',
             cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-heading)', fontSize: '0.7rem',
             color: selected.id === f.id ? f.color : 'var(--text-secondary)', letterSpacing: '0.04em', lineHeight: 1.3,
@@ -317,7 +342,8 @@ function FactionsTab() {
             {f.name}
             <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{f.alignment}</div>
           </button>
-        ))}
+          )
+        })}
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ borderLeft: `3px solid ${selected.color}`, paddingLeft: '1rem', marginBottom: '1rem' }}>
@@ -348,10 +374,14 @@ function ItemsTab() {
   return (
     <div style={{ display: 'flex', gap: '1rem', height: '100%' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', width: '150px', flexShrink: 0 }}>
-        {ITEMS.map((item) => (
+        {ITEMS.map((item) => {
+          const borderColor = selected.id === item.id ? 'var(--gold)' : 'var(--border)'
+          return (
           <button key={item.id} onClick={() => setSelected(item)} style={{
             background: selected.id === item.id ? 'var(--bg-hover)' : 'var(--bg-surface)',
-            border: `1px solid ${selected.id === item.id ? 'var(--gold)' : 'var(--border)'}`,
+            borderTop: `1px solid ${borderColor}`,
+            borderRight: `1px solid ${borderColor}`,
+            borderBottom: `1px solid ${borderColor}`,
             borderLeft: `3px solid var(--gold)`, borderRadius: '3px', padding: '0.5rem 0.75rem',
             cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-heading)', fontSize: '0.7rem',
             color: selected.id === item.id ? 'var(--gold)' : 'var(--text-secondary)', letterSpacing: '0.04em', lineHeight: 1.3,
@@ -359,7 +389,8 @@ function ItemsTab() {
             {item.name}
             <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{item.type.split(' ')[0]}</div>
           </button>
-        ))}
+          )
+        })}
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ borderLeft: '3px solid var(--gold)', paddingLeft: '1rem', marginBottom: '1rem' }}>
