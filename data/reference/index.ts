@@ -98,7 +98,7 @@ export const SINS = [
     host: 'King Kaelen (Doppelganger)',
     chapter: 16,
     location: 'Nova Clarus — Royal Palace',
-    color: '#ecf0f1',
+    color: '#c8d6e5',
     status: 'Active' as const,
     concept: 'Has worn King Kaelen\'s face for over a year. The real King knew and wrote a letter. The real King has been dead for over a year. Every interaction the party had with "the King" was this.',
     siphonEffect: 'The face dissolves. Not gradually — gone. A featureless gray thing on the floor. Small. The crown rolls across stone and stops against the throne base. Leocraes watches it stop. Does not pick it up.',
@@ -118,7 +118,7 @@ export const VIRTUE_TOKENS = [
   { sin: 'Sloth/Wrath', virtue: 'Patience', token: 'Cool river stone', counter: 'SLOTH WAVE + WRATH NOVA', color: '#3498db' },
   { sin: 'Gluttony', virtue: 'Temperance', token: 'Still-warm bread', counter: 'GLUTTONY MIRE', color: '#e67e22' },
   { sin: 'Envy', virtue: 'Acceptance', token: 'True mirror', counter: 'ENVY THEFT', color: '#2ecc71' },
-  { sin: 'Pride', virtue: 'Humility', token: 'Rough clay figure', counter: 'PRIDE MIRROR', color: '#ecf0f1' },
+  { sin: 'Pride', virtue: 'Humility', token: 'Rough clay figure', counter: 'PRIDE MIRROR', color: '#c8d6e5' },
 ]
 
 // ============================================================
@@ -760,7 +760,7 @@ export const PARTY = [
     newRace: 'Stout Halfling',
     newClass: 'Purple Dragon Knight Fighter',
     newBackground: 'Far Traveler',
-    color: '#27ae60',
+    color: '#34d399',
     stats: { str: 16, dex: 11, con: 10, int: 11, wis: 13, cha: 14 },
     hp: 28,
     ac: 15,
