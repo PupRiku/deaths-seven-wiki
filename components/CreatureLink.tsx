@@ -9,7 +9,7 @@ interface Props {
   displayText: string
 }
 
-const ACCENT = '#c0392b'
+const ACCENT = '#f87171' // status-danger
 const SHOW_DELAY = 120
 const HIDE_DELAY = 150
 const IMAGE_SIZE = 200 // 1:1 image, fixed square in the hover card
@@ -17,7 +17,7 @@ const IMAGE_SIZE = 200 // 1:1 image, fixed square in the hover card
 // Renders a stat block trait/action body in the hover card. Handles array descriptions
 // (line-broken with hanging indent on wrapped continuation, used for spell lists).
 function HoverEntryBody({ name, description }: { name: string; description: string | string[] }) {
-  const strong = { color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.7rem' } as const
+  const strong = { color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', fontWeight: 600 } as const
   if (Array.isArray(description)) {
     return (
       <>
@@ -111,13 +111,13 @@ export default function CreatureLink({ npc, displayText }: Props) {
         top: pos.top,
         left: pos.left,
         width: '360px',
-        background: '#0f0c09',
-        border: `1px solid ${ACCENT}55`,
+        background: 'var(--bg-base)',
+        border: `0.5px solid ${ACCENT}33`,
         borderTop: `2px solid ${ACCENT}`,
-        borderRadius: '4px',
+        borderRadius: 'var(--radius-lg)',
         padding: '0.75rem 0.85rem',
         zIndex: 1000,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(248, 113, 113, 0.08)',
         fontFamily: 'var(--font-body)',
         color: 'var(--text-primary)',
       }}
@@ -132,62 +132,68 @@ export default function CreatureLink({ npc, displayText }: Props) {
             width: `${IMAGE_SIZE}px`,
             height: `${IMAGE_SIZE}px`,
             objectFit: 'contain',
-            borderRadius: '3px',
-            border: `1px solid ${ACCENT}22`,
+            borderRadius: 'var(--radius-md)',
+            border: `0.5px solid ${ACCENT}22`,
             margin: '0 auto 0.5rem',
             display: 'block',
-            background: '#0a0806',
+            background: 'var(--bg-deep)',
           }}
         />
       )}
 
       {/* Header */}
-      <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.4rem', marginBottom: '0.4rem' }}>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.88rem', color: ACCENT, letterSpacing: '0.05em' }}>{sb.name}</div>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.62rem', color: 'var(--text-muted)', letterSpacing: '0.04em', marginTop: '0.15rem', fontStyle: 'italic' }}>
+      <div style={{ borderBottom: '0.5px solid var(--border)', paddingBottom: '0.4rem', marginBottom: '0.4rem' }}>
+        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.875rem', color: ACCENT, letterSpacing: '0.05em', fontWeight: 600 }}>{sb.name}</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem', fontStyle: 'italic' }}>
           {npc.race}
         </div>
-        <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.64rem', color: 'var(--text-secondary)', marginTop: '0.25rem', letterSpacing: '0.04em' }}>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
           CR {sb.cr} · AC {sb.ac} · HP {sb.hp} · Speed {sb.speed}
         </div>
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.25rem', padding: '0.3rem 0', borderBottom: '1px solid var(--border)', marginBottom: '0.45rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', padding: '0.3rem 0', borderBottom: '0.5px solid var(--border)', marginBottom: '0.45rem' }}>
         {(['str','dex','con','int','wis','cha'] as const).map((stat) => (
-          <div key={stat} style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.55rem', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{stat.toUpperCase()}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--text-primary)' }}>{sb[stat]}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--text-secondary)' }}>{mod(sb[stat])}</div>
+          <div key={stat} style={{
+            textAlign: 'center',
+            padding: '0.3rem 0.15rem',
+            background: 'rgba(34, 211, 238, 0.04)',
+            border: '0.5px solid rgba(34, 211, 238, 0.1)',
+            borderRadius: 'var(--radius-md)',
+          }}>
+            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.625rem', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{stat.toUpperCase()}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'var(--cyan-bright)', fontWeight: 500 }}>{sb[stat]}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', color: 'var(--text-secondary)' }}>{mod(sb[stat])}</div>
           </div>
         ))}
       </div>
 
       {/* Skills / Senses / Languages */}
       {(sb.senses || sb.languages || (sb.skills && sb.skills.length > 0)) && (
-        <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: '0.45rem' }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: '0.45rem' }}>
           {sb.skills && sb.skills.length > 0 && (
-            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.66rem' }}>Skills </strong>{sb.skills.join(', ')}</div>
+            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', fontWeight: 600 }}>Skills </strong>{sb.skills.join(', ')}</div>
           )}
           {sb.senses && (
-            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.66rem' }}>Senses </strong>{sb.senses}</div>
+            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', fontWeight: 600 }}>Senses </strong>{sb.senses}</div>
           )}
           {sb.languages && (
-            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.66rem' }}>Languages </strong>{sb.languages}</div>
+            <div><strong style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '0.6875rem', fontWeight: 600 }}>Languages </strong>{sb.languages}</div>
           )}
         </div>
       )}
 
       {/* First trait — div, not p, so the card never has block descendants of the host paragraph (portal also keeps it safe) */}
       {sb.traits && sb.traits.length > 0 && (
-        <div style={{ margin: '0.25rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+        <div style={{ margin: '0.25rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
           <HoverEntryBody name={sb.traits[0].name} description={sb.traits[0].description} />
         </div>
       )}
 
       {/* First action */}
       {sb.actions && sb.actions.length > 0 && (
-        <div style={{ margin: '0.25rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+        <div style={{ margin: '0.25rem 0', fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
           <HoverEntryBody name={sb.actions[0].name} description={sb.actions[0].description} />
         </div>
       )}
@@ -199,19 +205,20 @@ export default function CreatureLink({ npc, displayText }: Props) {
         style={{
           width: '100%',
           marginTop: '0.6rem',
-          padding: '0.45rem',
+          padding: '0.5rem',
           fontFamily: 'var(--font-heading)',
-          fontSize: '0.7rem',
-          letterSpacing: '0.1em',
+          fontSize: '0.6875rem',
+          letterSpacing: '0.12em',
+          fontWeight: 600,
           background: 'transparent',
-          border: `1px solid ${ACCENT}66`,
+          border: `0.5px solid ${ACCENT}66`,
           color: ACCENT,
-          borderRadius: '3px',
+          borderRadius: 'var(--radius-md)',
           cursor: 'pointer',
-          transition: 'all 0.15s',
+          transition: 'all 0.2s ease',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = `${ACCENT}22`; e.currentTarget.style.borderColor = ACCENT }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = `${ACCENT}66` }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = `${ACCENT}22`; e.currentTarget.style.borderColor = ACCENT; e.currentTarget.style.boxShadow = '0 0 12px rgba(248, 113, 113, 0.15)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = `${ACCENT}66`; e.currentTarget.style.boxShadow = 'none' }}
       >
         OPEN FULL STAT BLOCK ↗
       </button>

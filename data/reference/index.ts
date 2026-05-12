@@ -98,7 +98,7 @@ export const SINS = [
     host: 'King Kaelen (Doppelganger)',
     chapter: 16,
     location: 'Nova Clarus — Royal Palace',
-    color: '#ecf0f1',
+    color: '#c8d6e5',
     status: 'Active' as const,
     concept: 'Has worn King Kaelen\'s face for over a year. The real King knew and wrote a letter. The real King has been dead for over a year. Every interaction the party had with "the King" was this.',
     siphonEffect: 'The face dissolves. Not gradually — gone. A featureless gray thing on the floor. Small. The crown rolls across stone and stops against the throne base. Leocraes watches it stop. Does not pick it up.',
@@ -118,7 +118,7 @@ export const VIRTUE_TOKENS = [
   { sin: 'Sloth/Wrath', virtue: 'Patience', token: 'Cool river stone', counter: 'SLOTH WAVE + WRATH NOVA', color: '#3498db' },
   { sin: 'Gluttony', virtue: 'Temperance', token: 'Still-warm bread', counter: 'GLUTTONY MIRE', color: '#e67e22' },
   { sin: 'Envy', virtue: 'Acceptance', token: 'True mirror', counter: 'ENVY THEFT', color: '#2ecc71' },
-  { sin: 'Pride', virtue: 'Humility', token: 'Rough clay figure', counter: 'PRIDE MIRROR', color: '#ecf0f1' },
+  { sin: 'Pride', virtue: 'Humility', token: 'Rough clay figure', counter: 'PRIDE MIRROR', color: '#c8d6e5' },
 ]
 
 // ============================================================
@@ -380,7 +380,7 @@ export const FACTIONS = [
     name: 'Radiant Church',
     type: 'Religious Institution',
     alignment: 'Neutral',
-    color: 'var(--gold)',
+    color: 'var(--orange)',
     leader: 'Various regional bishops',
     founder: null,
     description: 'The dominant religious institution in Nova Clarus and surrounding territories. Operates in tension with the Inquisition in Darkon. Not a major player in the main campaign arc but present as institutional texture.',
@@ -429,7 +429,7 @@ export const FACTIONS = [
     name: 'Casa Ornasca (Resistance)',
     type: 'Resistance Movement',
     alignment: 'Ally',
-    color: 'var(--gold)',
+    color: 'var(--orange)',
     leader: 'Corra',
     founder: null,
     description: 'The remnants of the Casa Ornasca citizenry organized under Corra\'s leadership. Thirty people. Not fighters — survivors. Waiting for something to change since the usurpation.',
@@ -670,7 +670,7 @@ export const MECHANICS = [
     id: 'virtue-tokens',
     name: 'Virtue Tokens',
     arc: 'Ch.19-20 — Boss Rush & Aspirant Fight',
-    color: 'var(--gold)',
+    color: 'var(--orange)',
     summary: 'Earned by defeating each Sin in pure form during the boss rush (Ch.19). Used to counter the Aspirant\'s Sin abilities in Ch.20.',
     rules: [
       'GENEROSITY (from Greed): Worn copper coin. Counters GREED SURGE — redistributes drained HP to all allies.',
@@ -702,7 +702,7 @@ export const MECHANICS = [
     id: 'nyx-trial',
     name: "Nyx's Trial",
     arc: 'Ch.18 — The Stillwater Temple',
-    color: 'var(--gold)',
+    color: 'var(--orange)',
     summary: "Four guardian statues fight the party. No deaths permitted. Reset on death. Loop until they win clean.",
     rules: [
       'Statues fight in the style of the party\'s past selves — familiar, earned',
@@ -760,7 +760,7 @@ export const PARTY = [
     newRace: 'Stout Halfling',
     newClass: 'Purple Dragon Knight Fighter',
     newBackground: 'Far Traveler',
-    color: '#27ae60',
+    color: '#34d399',
     stats: { str: 16, dex: 11, con: 10, int: 11, wis: 13, cha: 14 },
     hp: 28,
     ac: 15,
