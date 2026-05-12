@@ -217,8 +217,9 @@ export default function EncounterPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '800px', margin: '0 auto' }}>
           {sorted.map((c, idx) => {
             const isCurrent = isActive && idx === currentTurn
-            const hpPct = Math.max(0, c.hp / c.maxHp * 100)
-            const hpCls = hpColor(c.hp, c.maxHp)
+            // maxHp can be 0 if a combatant was added with blank HP — avoid NaN/Infinity widths.
+            const hpPct = c.maxHp > 0 ? Math.max(0, (c.hp / c.maxHp) * 100) : 0
+            const hpCls = c.maxHp > 0 ? hpColor(c.hp, c.maxHp) : 'critical'
 
             return (
               <div key={c.id} className={`combatant-row ${isCurrent ? 'active' : ''} ${c.isPlayer ? 'player' : ''} ${c.isEnemy ? 'enemy' : ''}`}
