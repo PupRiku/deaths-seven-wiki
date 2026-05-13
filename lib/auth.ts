@@ -118,9 +118,12 @@ export async function getSessionFromCookies(
   return null
 }
 
+// `secure` is on in production only — localhost dev runs over plain http and
+// browsers refuse to set Secure cookies on http origins.
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: 'strict' as const,
   path: '/',
   maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
+  secure: process.env.NODE_ENV === 'production',
 }

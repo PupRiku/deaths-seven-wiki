@@ -35,6 +35,9 @@ describe('POST /api/auth/dm', () => {
     expect(setCookie).toMatch(/dm_session=/)
     expect(setCookie.toLowerCase()).toContain('httponly')
     expect(setCookie.toLowerCase()).toContain('samesite=strict')
+    // In dev/test (NODE_ENV !== 'production') the Secure flag must be off so
+    // browsers can store the cookie over plain http://localhost.
+    expect(setCookie.toLowerCase()).not.toContain('secure')
   })
 
   it('returns 401 with the wrong passphrase', async () => {
@@ -51,6 +54,34 @@ describe('POST /api/auth/dm', () => {
       body: { passphrase: '' },
     }) as never)
     expect(res.status).toBe(400)
+  })
+
+  it('returns 400 with whitespace-only passphrase', async () => {
+    const { POST } = await loadRoute()
+    const res = await POST(mockRequest('POST', 'http://x/api/auth/dm', {
+      body: { passphrase: '   \t\n  ' },
+    }) as never)
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 401 (not 500) when DM_PASSPHRASE_HASH is the wrong length', async () => {
+    // Constant-time compare must short-circuit on length mismatch instead of
+    // throwing — otherwise a misconfigured hash crashes the route.
+    process.env.DM_PASSPHRASE_HASH = 'tooshort'
+    const { POST } = await loadRoute()
+    const res = await POST(mockRequest('POST', 'http://x/api/auth/dm', {
+      body: { passphrase: 'correct-horse-battery-staple' },
+    }) as never)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 401 (not 500) when DM_PASSPHRASE_HASH contains non-hex characters', async () => {
+    process.env.DM_PASSPHRASE_HASH = 'z'.repeat(64)
+    const { POST } = await loadRoute()
+    const res = await POST(mockRequest('POST', 'http://x/api/auth/dm', {
+      body: { passphrase: 'correct-horse-battery-staple' },
+    }) as never)
+    expect(res.status).toBe(401)
   })
 
   it('returns 400 with malformed JSON body', async () => {
