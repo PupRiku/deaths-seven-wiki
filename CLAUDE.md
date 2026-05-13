@@ -46,6 +46,7 @@ app/
     encounter/            # Initiative tracker
     session-log/          # Live note capture + export
     creatures/[id]        # Stat-block popout (used by CreatureLink)
+    reveals/              # Reveal Manager (selective reveal control surface)
     players/              # Placeholder: player token management
   player/
     layout.tsx            # Player layout (header + bottom tabs)
@@ -56,24 +57,31 @@ app/
   api/
     auth/{dm,player,logout}/route.ts   # POST endpoints
     dm/{chapters,npcs,notes,export}/route.ts  # DM data routes (auth-gated)
+    dm/reveals/                         # Reveal Manager API: list, visibility/field PATCH, custom details CRUD, bulk, bulk-chapter
     player/profile/route.ts            # Placeholder authenticated player API
+    player/{npcs,locations,factions,items}/route.ts  # Player entity endpoints — filtered through lib/reveal-filter.ts
 
 middleware.ts             # Edge-runtime cookie-presence gate for /dm /player /api/dm /api/player
 
 components/
   dm/Sidebar.tsx          # DM left-nav (Tabler icons, sign-out, DM View badge)
+  dm/RevealManager/       # Reveal Manager UI (FilterBar, EntityRow, DetailPanel, PlayerPreview, BulkActions, VisibilityToggle)
   player/BottomTabs.tsx   # Player bottom tab bar (Dashboard/World/Party/Journal)
   player/PlayerShell.tsx  # Centered "Coming Soon" stub for empty player routes
   shared/CampaignHeader   # Reusable "Death's Seven" branding
   shared/ThemeProvider    # Stub for future role-based CSS variable overrides
   CreatureLink.tsx        # Inline chapter-prose link → hover card + popout window
 
-data/                     # Chapter, NPC, and reference content (unchanged)
+data/                     # Chapter, NPC, and reference content. NPC interface now includes `appearance` (physical description, safe at discovered tier).
 
 lib/
-  db.ts                   # libSQL client + initDB() (now also seeds player_tokens). Accepts an optional Client for tests.
+  db.ts                   # libSQL client + initDB() (seeds player_tokens; runs syncReveals() on the singleton client). Accepts an optional Client for tests.
   auth.ts                 # Session helpers: hashToken, hashPassphrase, create/validate/deleteSession, getSessionFromCookies, getSessionForRole
   colors.ts               # rgbaFromHex helper
+  reveal-sync.ts          # Walks data/ entities and inserts entity_reveals + entity_field_reveals rows. Idempotent. Run from initDB().
+  reveal-filter.ts        # SPOILER PROTECTION BOUNDARY. filterEntityForPlayer() — single source of truth for "what does a player see," used by both Player API and DM "See as Player" preview.
+  reveal-data.ts          # loadReveals/loadRevealsByType/loadRevealForEntity — DB row → typed objects.
+  reveal-entities.ts      # Look up source-of-truth entity by (type, id) from data files; type-guard helpers.
 
 tests/                    # Vitest. helpers/ provide in-memory libSQL DBs and session/token factories.
                           # API integration tests use vi.mock('@/lib/db') + getter to swap in fresh in-memory DBs per test.
@@ -99,6 +107,35 @@ docs/
 - Tests live under `tests/` mirroring `app/`, `lib/`, `components/`, `middleware.ts`.
 - DB tests use `tests/helpers/db.ts` `createTestDb()` for an isolated in-memory libSQL instance; **never** touch `.wiki-data/wiki.db` from tests.
 - Auth API integration tests pattern: `vi.mock('@/lib/db', ...)` exposes a getter for `db` and a wrapped `initDB()` that points at a per-test in-memory client (see `tests/integration/api/auth/dm.test.ts`).
+- libSQL gotcha: `db.transaction('write')` opens a separate connection that doesn't share schema with `:memory:` test databases. Use `db.batch(stmts, 'write')` instead for atomic multi-statement updates (see `app/api/dm/reveals/bulk/route.ts`).
+- Reveal-system tests call `syncReveals(memory.db, { force: true, logger: { warn: () => {} } })` after `initDB()` because `initDB()` only auto-syncs the singleton client.
+
+### Selective Reveal System
+
+Player-facing visibility for NPCs / Locations / Factions / Items is gated by three database tables (`entity_reveals`, `entity_field_reveals`, `entity_custom_details`). The data files (`data/npcs/`, `data/reference/`) remain the source of truth for content; the DB only controls visibility.
+
+**Visibility tiers (`entity_reveals.visibility`):**
+- `hidden` — completely absent from `/api/player/*` responses
+- `discovered` — only physical/observable info: NPC `appearance`, location type, faction type+alignment, item type. Display name comes from `discovered_name` (falls back to `???`).
+- `revealed` — full base data + per-field reveals (notes, properties, key members, etc.) controlled by `entity_field_reveals`
+
+**Field naming:** Array fields use `notes:0`, `notes:1`, `keyLocations:0`, `properties:0`, etc. Indexes are stable as long as the data file's array order doesn't change — if the DM reorders notes in `data/npcs/index.ts`, the indexes shift and any existing reveal toggles will mismatch their content. Acceptable tradeoff for the local single-DM use case.
+
+**The filter is the source of truth:** [lib/reveal-filter.ts](lib/reveal-filter.ts) `filterEntityForPlayer()` is called by both Player API routes AND the DM "See as Player" preview. If the preview shows it, the player sees it. Don't add filtering anywhere else.
+
+**Sync:** [lib/reveal-sync.ts](lib/reveal-sync.ts) walks the data files and inserts reveal rows for any entity that doesn't have one. Idempotent — never overwrites existing visibility/field state. Runs from `initDB()` on the singleton client (with a per-process latch). Tests must call it explicitly via `syncReveals(memory.db, { force: true })`.
+
+**DM API routes** (under `/api/dm/reveals/`):
+- `GET /` — full reveal records with filters (type, visibility, chapter, search)
+- `PATCH /:type/:id` — visibility + discoveredName
+- `PATCH /:type/:id/fields/:fieldName` — toggle one field
+- `POST /bulk` — multi-entity visibility set (uses `db.batch()`, not `transaction()`)
+- `POST /bulk-chapter` — set every entity for a chapter
+- `POST/PATCH/DELETE /:type/:id/details[/...]` — custom detail CRUD + reorder
+
+**Player API routes** (`/api/player/{npcs,locations,factions,items}`): each calls `loadRevealsByType` + `filterEntityForPlayer` and returns only visible entities.
+
+**Editing the NPC interface:** `appearance` is a required physical-only field. When adding a new NPC, write a concise physical description with no plot/story context — that's what players see at the discovered tier.
 
 ## Design System
 Kingdom Hearts-inspired midnight-blue palette. Full spec at [docs/VISUAL_LANGUAGE.md](docs/VISUAL_LANGUAGE.md) — that file is the source of truth; this section is the cheat sheet.
@@ -143,7 +180,7 @@ The data files mix raw hex (`#f39c12`) and CSS vars (`var(--cyan)`) in the same 
 ## Common Tasks
 
 ### Add/update NPC or creature
-Edit `data/npcs/index.ts` — add to the `npcs` array. The `statBlock` field is optional.
+Edit `data/npcs/index.ts` — add to the `npcs` array. The `statBlock` field is optional. Always include an `appearance` field (physical description only, no plot/story context — this is what players see at the discovered reveal tier). On the next dev-server restart, `syncReveals()` will create matching `entity_reveals` + `entity_field_reveals` rows defaulting to hidden.
 
 ### Update chapter content
 Edit the relevant `data/chapters/chapterNN.ts`. Served via `/api/chapters?number=N`.
