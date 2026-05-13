@@ -111,6 +111,54 @@ export async function initDB(client: Client = db) {
     )
   `)
 
+  // === Selective Reveal System ===
+  // Base visibility per (entity_type, entity_id). UNIQUE on the pair so the
+  // sync process can use INSERT OR IGNORE without duplicating rows.
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS entity_reveals (
+      id TEXT PRIMARY KEY,
+      entity_type TEXT NOT NULL CHECK (entity_type IN ('npc', 'location', 'faction', 'item')),
+      entity_id TEXT NOT NULL,
+      visibility TEXT NOT NULL DEFAULT 'hidden' CHECK (visibility IN ('hidden', 'discovered', 'revealed')),
+      discovered_name TEXT,
+      chapter_association INTEGER,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(entity_type, entity_id)
+    )
+  `)
+
+  // Field-level reveal toggles. Auto-populated from data files. Array fields
+  // are indexed (e.g. "notes:0", "notes:1") — index is stable as long as the
+  // data file's array order doesn't change.
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS entity_field_reveals (
+      id TEXT PRIMARY KEY,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      field_name TEXT NOT NULL,
+      is_revealed INTEGER NOT NULL DEFAULT 0,
+      revealed_at TEXT,
+      UNIQUE(entity_type, entity_id, field_name)
+    )
+  `)
+
+  // Freeform DM-authored reveal entries attached to an entity. Not synced —
+  // the DM creates these by hand in the Reveal Manager.
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS entity_custom_details (
+      id TEXT PRIMARY KEY,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      is_revealed INTEGER NOT NULL DEFAULT 0,
+      revealed_at TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      sort_order INTEGER NOT NULL DEFAULT 0
+    )
+  `)
+
   // Seed default campaign state. INSERT OR IGNORE so concurrent cold-start
   // requests can both run this block without colliding on the PK.
   await client.execute(`
