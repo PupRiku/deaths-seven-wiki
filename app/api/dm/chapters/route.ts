@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { initDB } from '@/lib/db'
+import { getSessionForRole } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
+  await initDB()
+  const ctx = await getSessionForRole(await cookies(), 'dm')
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { searchParams } = new URL(req.url)
   const num = searchParams.get('number')
 

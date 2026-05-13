@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { db, initDB } from '@/lib/db'
+import { getSessionForRole } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
   await initDB()
+  const ctx = await getSessionForRole(await cookies(), 'dm')
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { format = 'md', sessionNumbers, chapterNumbers } = await req.json()
 
   let sql = `SELECT * FROM session_notes`

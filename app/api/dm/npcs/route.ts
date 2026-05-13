@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { npcs, searchNPCs } from '@/data/npcs/index'
+import { initDB } from '@/lib/db'
+import { getSessionForRole } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
+  await initDB()
+  const ctx = await getSessionForRole(await cookies(), 'dm')
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { searchParams } = new URL(req.url)
   const q = searchParams.get('q')
   const tag = searchParams.get('tag')

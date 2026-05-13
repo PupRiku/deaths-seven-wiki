@@ -72,7 +72,7 @@ data/                     # Chapter, NPC, and reference content (unchanged)
 
 lib/
   db.ts                   # libSQL client + initDB() (now also seeds player_tokens). Accepts an optional Client for tests.
-  auth.ts                 # Session helpers: hashToken, hashPassphrase, create/validate/deleteSession, getSessionFromCookies
+  auth.ts                 # Session helpers: hashToken, hashPassphrase, create/validate/deleteSession, getSessionFromCookies, getSessionForRole
   colors.ts               # rgbaFromHex helper
 
 tests/                    # Vitest. helpers/ provide in-memory libSQL DBs and session/token factories.
@@ -86,8 +86,10 @@ docs/
 ```
 
 ### Auth/session model (cheat sheet)
-- Middleware (Edge runtime) only checks **cookie presence** — it cannot hit libSQL. It redirects (`/dm/*` → `/?role=dm`, `/player/*` → `/join`) or returns 401 (`/api/dm/*`, `/api/player/*`) when the cookie is missing.
-- Real session validation lives in `lib/auth.ts` (`validateSession`, `getSessionFromCookies`) and is invoked from server components / API route handlers when they actually need the identity.
+- **Two-layer gate.** Middleware (Edge runtime) only checks **cookie presence** — it can't hit libSQL. It redirects (`/dm/*` → `/?role=dm`, `/player/*` → `/join`) or returns 401 (`/api/dm/*`, `/api/player/*`) when the cookie is missing. Then **every** role-scoped surface re-validates against the DB:
+  - `app/dm/layout.tsx` and `app/player/layout.tsx` (async server components) call `getSessionForRole(await cookies(), role)` and `redirect()` on null.
+  - `/api/player/profile` and all four `/api/dm/*` handlers (`chapters`, `npcs`, `notes`, `export`) do the same and return 401 on null. `notes` factors this into a local `dmGuard()` helper since it has 4 method exports.
+- Use `getSessionForRole(cookieStore, role)` for role-scoped surfaces (no DM-priority shadowing). Use `getSessionFromCookies(cookieStore)` only for "any valid session" lookups (none today).
 - `createDmSession` / `createPlayerSession` insert a row with a 30-day expiry and return a `crypto.randomUUID()`. The session ID is the cookie value.
 - DM passphrase is hashed at compare time only — only the hash lives on disk in `.env.local`. Player tokens are stored as SHA-256 hashes in `player_tokens.token_hash`; plaintext only ever appears in console seed output and `lib/db.ts` `PLAYER_TOKEN_SEEDS`.
 - To rotate a player token: edit `PLAYER_TOKEN_SEEDS` then `DELETE FROM player_tokens` and restart the dev server (it'll reseed and reprint).

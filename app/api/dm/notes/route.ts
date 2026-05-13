@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { db, initDB, generateId } from '@/lib/db'
+import { getSessionForRole } from '@/lib/auth'
+
+async function dmGuard() {
+  await initDB()
+  const ctx = await getSessionForRole(await cookies(), 'dm')
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  return null
+}
 
 export async function GET() {
-  await initDB()
+  const blocked = await dmGuard()
+  if (blocked) return blocked
+
   const rows = await db.execute(
     `SELECT * FROM session_notes ORDER BY session_number DESC, created_at DESC`
   )
@@ -21,7 +32,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  await initDB()
+  const blocked = await dmGuard()
+  if (blocked) return blocked
+
   const body = await req.json()
   const id = generateId()
   const now = new Date().toISOString()
@@ -46,7 +59,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  await initDB()
+  const blocked = await dmGuard()
+  if (blocked) return blocked
+
   const body = await req.json()
   const now = new Date().toISOString()
 
@@ -70,7 +85,9 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  await initDB()
+  const blocked = await dmGuard()
+  if (blocked) return blocked
+
   const { id } = await req.json()
   await db.execute({ sql: `DELETE FROM session_notes WHERE id=?`, args: [id] })
   return NextResponse.json({ success: true })
