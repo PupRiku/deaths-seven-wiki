@@ -51,7 +51,7 @@ export async function createTestDb(): Promise<Client> {
       character_id TEXT NOT NULL UNIQUE,
       character_name TEXT NOT NULL,
       player_name TEXT NOT NULL,
-      token_hash TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
       created_at TEXT DEFAULT (datetime('now')),
       last_active_at TEXT
     )

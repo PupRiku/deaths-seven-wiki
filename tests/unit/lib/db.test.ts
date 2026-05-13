@@ -85,6 +85,18 @@ describe('Token seeding', () => {
     }
   })
 
+  it('enforces UNIQUE on token_hash so login lookups stay deterministic', async () => {
+    await initDB(db)
+    const dupHash = sha256('ROLANDO') // same hash as the seeded Rolando row
+    await expect(
+      db.execute({
+        sql: `INSERT INTO player_tokens (id, character_id, character_name, player_name, token_hash)
+              VALUES (?, ?, ?, ?, ?)`,
+        args: ['dup-id', 'duplicate', 'Duplicate Char', 'Tester', dupHash],
+      })
+    ).rejects.toThrow(/UNIQUE/i)
+  })
+
   it('does not store tokens in plaintext', async () => {
     await initDB(db)
     const rows = await db.execute(`SELECT token_hash FROM player_tokens`)

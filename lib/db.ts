@@ -80,14 +80,17 @@ export async function initDB(client: Client = db) {
     )
   `)
 
-  // Player tokens (one per character, stable across rerolls)
+  // Player tokens (one per character, stable across rerolls).
+  // token_hash is UNIQUE so that login lookups (`SELECT ... WHERE token_hash = ?
+  // LIMIT 1`) are deterministic — a duplicate would otherwise auth the first
+  // matching row arbitrarily.
   await client.execute(`
     CREATE TABLE IF NOT EXISTS player_tokens (
       id TEXT PRIMARY KEY,
       character_id TEXT NOT NULL UNIQUE,
       character_name TEXT NOT NULL,
       player_name TEXT NOT NULL,
-      token_hash TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
       created_at TEXT DEFAULT (datetime('now')),
       last_active_at TEXT
     )
@@ -132,12 +135,16 @@ export async function initDB(client: Client = db) {
         ],
       })
     }
-    // Log plaintext tokens so the DM can distribute them. Only happens on first run.
-    console.log('\n=== PLAYER TOKENS (distribute these once; not logged again) ===')
-    for (const seed of PLAYER_TOKEN_SEEDS) {
-      console.log(`  ${seed.playerName.padEnd(7)} → ${seed.token.padEnd(8)} (${seed.characterName})`)
+    // Log plaintext tokens so the DM can distribute them. Only happens on
+    // first run, and only outside production so a captured/forwarded prod log
+    // can't leak credentials. To re-print: delete the player_tokens rows.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n=== PLAYER TOKENS (distribute these once; not logged again) ===')
+      for (const seed of PLAYER_TOKEN_SEEDS) {
+        console.log(`  ${seed.playerName.padEnd(7)} → ${seed.token.padEnd(8)} (${seed.characterName})`)
+      }
+      console.log('================================================================\n')
     }
-    console.log('================================================================\n')
   }
 
   console.log('✓ Database initialized at', dbPath)
