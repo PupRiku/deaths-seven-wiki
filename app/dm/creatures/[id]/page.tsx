@@ -76,7 +76,7 @@ export default function CreaturePopout({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/npcs?id=${encodeURIComponent(id)}`)
+    fetch(`/api/dm/npcs?id=${encodeURIComponent(id)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('not found'))))
       .then((data) => {
         setNpc(data)

@@ -279,7 +279,7 @@ export default function NPCsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/npcs').then((r) => r.json()).then((data) => {
+    fetch('/api/dm/npcs').then((r) => r.json()).then((data) => {
       setNpcs(data)
       setFiltered(data)
       setLoading(false)

@@ -28,7 +28,7 @@ export default function SessionLogPage() {
   })
 
   const fetchNotes = useCallback(async () => {
-    const res = await fetch('/api/notes')
+    const res = await fetch('/api/dm/notes')
     const data = await res.json()
     setNotes(data)
     setLoading(false)
@@ -77,9 +77,9 @@ export default function SessionLogPage() {
     }
 
     if (activeNote) {
-      await fetch('/api/notes', { method: 'PUT', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } })
+      await fetch('/api/dm/notes', { method: 'PUT', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } })
     } else {
-      await fetch('/api/notes', { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } })
+      await fetch('/api/dm/notes', { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } })
     }
 
     await fetchNotes()
@@ -89,14 +89,14 @@ export default function SessionLogPage() {
 
   async function deleteNote(id: string) {
     if (!confirm('Delete this note?')) return
-    await fetch('/api/notes', { method: 'DELETE', body: JSON.stringify({ id }), headers: { 'Content-Type': 'application/json' } })
+    await fetch('/api/dm/notes', { method: 'DELETE', body: JSON.stringify({ id }), headers: { 'Content-Type': 'application/json' } })
     if (activeNote?.id === id) { setActiveNote(null); setIsEditing(false) }
     await fetchNotes()
   }
 
   async function exportNotes() {
     setExporting(true)
-    const res = await fetch('/api/export', {
+    const res = await fetch('/api/dm/export', {
       method: 'POST',
       body: JSON.stringify({ format: exportFormat }),
       headers: { 'Content-Type': 'application/json' },

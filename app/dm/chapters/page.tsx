@@ -148,15 +148,15 @@ export default function ChaptersPage() {
   const [npcs, setNpcs] = useState<NPC[]>([])
 
   useEffect(() => {
-    fetch('/api/chapters').then((r) => r.json()).then((data) => { setIndex(data); setLoading(false) })
-    fetch('/api/npcs').then((r) => r.json()).then(setNpcs).catch(() => {})
+    fetch('/api/dm/chapters').then((r) => r.json()).then((data) => { setIndex(data); setLoading(false) })
+    fetch('/api/dm/npcs').then((r) => r.json()).then(setNpcs).catch(() => {})
   }, [])
 
   const loadChapter = useCallback(async (num: number) => {
     if (num < 1 || num > 20) return
     setChapterLoading(true)
     setActiveNum(num)
-    const res = await fetch(`/api/chapters?number=${num}`)
+    const res = await fetch(`/api/dm/chapters?number=${num}`)
     const data = await res.json()
     setActiveChapter(data)
     setChapterLoading(false)
