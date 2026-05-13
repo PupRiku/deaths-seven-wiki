@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createClient, type Client } from '@libsql/client'
 import { initDB, PLAYER_TOKEN_SEEDS } from '@/lib/db'
 import { sha256 } from '../../helpers/db'
@@ -39,6 +39,31 @@ describe('initDB', () => {
     expect(Number(players.rows[0].n)).toBe(PLAYER_TOKEN_SEEDS.length)
     const state = await db.execute(`SELECT COUNT(*) as n FROM campaign_state`)
     expect(Number(state.rows[0].n)).toBe(4)
+  })
+
+  it('is concurrency-safe — parallel initDB calls do not throw or duplicate', async () => {
+    // Regression: initDB() now runs from every gated route + layout, so two
+    // cold-start requests can race the seed block. INSERT OR IGNORE must
+    // dedupe instead of letting a UNIQUE error bubble up and fail the request.
+    await Promise.all([initDB(db), initDB(db), initDB(db)])
+    const players = await db.execute(`SELECT COUNT(*) as n FROM player_tokens`)
+    expect(Number(players.rows[0].n)).toBe(PLAYER_TOKEN_SEEDS.length)
+  })
+
+  it('does not log the on-disk path when invoked with a non-default client', async () => {
+    // Regression: previously the "✓ Database initialized at <dbPath>" line
+    // printed even from tests using :memory: clients, misleading anyone
+    // grepping logs. The log must be gated on `client === db`.
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      await initDB(db) // db here is the test's in-memory client, NOT the singleton
+      const printedDbPath = spy.mock.calls.some((args) =>
+        args.some((a) => typeof a === 'string' && a.includes('Database initialized at'))
+      )
+      expect(printedDbPath).toBe(false)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
 

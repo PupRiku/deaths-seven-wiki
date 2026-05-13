@@ -33,6 +33,10 @@ function hashTokenPlain(input: string): string {
   return crypto.createHash('sha256').update(input.trim().toUpperCase()).digest('hex')
 }
 
+// Module-level latch so the dev-only "✓ Database initialized at..." banner
+// fires once per process instead of on every gated request.
+let pathLogged = false
+
 export async function initDB(client: Client = db) {
   // Session notes
   await client.execute(`
@@ -107,24 +111,26 @@ export async function initDB(client: Client = db) {
     )
   `)
 
-  // Seed default campaign state if empty
-  const state = await client.execute(`SELECT key FROM campaign_state LIMIT 1`)
-  if (state.rows.length === 0) {
-    await client.execute(`
-      INSERT INTO campaign_state (key, value) VALUES
-        ('current_chapter', '1'),
-        ('current_session', '1'),
-        ('current_level', '3'),
-        ('party_level', '3')
-    `)
-  }
+  // Seed default campaign state. INSERT OR IGNORE so concurrent cold-start
+  // requests can both run this block without colliding on the PK.
+  await client.execute(`
+    INSERT OR IGNORE INTO campaign_state (key, value) VALUES
+      ('current_chapter', '1'),
+      ('current_session', '1'),
+      ('current_level', '3'),
+      ('party_level', '3')
+  `)
 
-  // Seed player tokens if empty (one-time)
+  // Seed player tokens. Use INSERT OR IGNORE so two concurrent cold-start
+  // requests can both run this block harmlessly: each row's UNIQUE constraints
+  // (character_id, token_hash) silently dedupe instead of throwing. The
+  // SELECT short-circuit just avoids the four no-op writes on warm starts.
   const tokens = await client.execute(`SELECT id FROM player_tokens LIMIT 1`)
   if (tokens.rows.length === 0) {
+    let inserted = 0
     for (const seed of PLAYER_TOKEN_SEEDS) {
-      await client.execute({
-        sql: `INSERT INTO player_tokens (id, character_id, character_name, player_name, token_hash)
+      const res = await client.execute({
+        sql: `INSERT OR IGNORE INTO player_tokens (id, character_id, character_name, player_name, token_hash)
               VALUES (?, ?, ?, ?, ?)`,
         args: [
           crypto.randomUUID(),
@@ -134,12 +140,13 @@ export async function initDB(client: Client = db) {
           hashTokenPlain(seed.token),
         ],
       })
+      if ((res.rowsAffected ?? 0) > 0) inserted++
     }
-    // Log plaintext tokens so the DM can distribute them. Only happens on
-    // first run AND only under `NODE_ENV === 'development'` — keeps tokens
-    // out of CI logs (NODE_ENV=test) and prod logs (NODE_ENV=production).
-    // To re-print: delete the player_tokens rows and restart `npm run dev`.
-    if (process.env.NODE_ENV === 'development') {
+    // Log plaintext tokens so the DM can distribute them. Only when this
+    // process actually inserted at least one row AND only under
+    // NODE_ENV=development — keeps tokens out of CI / prod logs and avoids a
+    // double-print if a racing process already seeded.
+    if (inserted > 0 && process.env.NODE_ENV === 'development') {
       console.log('\n=== PLAYER TOKENS (distribute these once; not logged again) ===')
       for (const seed of PLAYER_TOKEN_SEEDS) {
         console.log(`  ${seed.playerName.padEnd(7)} → ${seed.token.padEnd(8)} (${seed.characterName})`)
@@ -148,7 +155,14 @@ export async function initDB(client: Client = db) {
     }
   }
 
-  console.log('✓ Database initialized at', dbPath)
+  // Log the on-disk path once per process, only for the singleton client and
+  // only in dev. Suppresses the misleading log when tests pass an in-memory
+  // client, and avoids spamming the dev console once initDB() runs from every
+  // gated route.
+  if (!pathLogged && client === db && process.env.NODE_ENV === 'development') {
+    console.log('✓ Database initialized at', dbPath)
+    pathLogged = true
+  }
 }
 
 export async function getCampaignState(): Promise<Record<string, string>> {
