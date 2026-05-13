@@ -14,7 +14,21 @@ import {
   createPlayerSession,
   validateSession,
   deleteSession,
+  getSessionForRole,
+  DM_COOKIE,
+  PLAYER_COOKIE,
 } from '@/lib/auth'
+
+// Build a minimal cookie store mirroring the next/headers cookies() shape that
+// getSessionForRole expects (just the .get(name) -> { value } | undefined bit).
+function cookieJar(entries: Record<string, string>) {
+  return {
+    get(name: string) {
+      const v = entries[name]
+      return v === undefined ? undefined : { value: v }
+    },
+  }
+}
 
 let db: Client
 
@@ -146,6 +160,55 @@ describe('validateSession (player)', () => {
     const tok = await createTestPlayerToken(db)
     const { sessionId } = await createTestPlayerSession(db, tok.id)
     expect(await validateSession(sessionId, 'dm', db)).toBeNull()
+  })
+})
+
+describe('getSessionForRole', () => {
+  it('returns null when the relevant cookie is missing', async () => {
+    expect(await getSessionForRole(cookieJar({}), 'dm', db)).toBeNull()
+    expect(await getSessionForRole(cookieJar({}), 'player', db)).toBeNull()
+  })
+
+  it('validates a DM cookie when role=dm', async () => {
+    const { sessionId } = await createTestDmSession(db)
+    const ctx = await getSessionForRole(cookieJar({ [DM_COOKIE]: sessionId }), 'dm', db)
+    expect(ctx).toEqual({ role: 'dm' })
+  })
+
+  it('validates a player cookie when role=player and includes character info', async () => {
+    const tok = await createTestPlayerToken(db, {
+      characterId: 'rolando',
+      characterName: 'Rolando Ornasca',
+      playerName: 'Mikey',
+    })
+    const { sessionId } = await createTestPlayerSession(db, tok.id)
+    const ctx = await getSessionForRole(cookieJar({ [PLAYER_COOKIE]: sessionId }), 'player', db)
+    expect(ctx).toMatchObject({ role: 'player', characterId: 'rolando', playerName: 'Mikey' })
+  })
+
+  it('ignores the wrong-role cookie even when present', async () => {
+    // Both cookies present, but ask for player → DM cookie must not be used.
+    const dm = await createTestDmSession(db)
+    const tok = await createTestPlayerToken(db)
+    const player = await createTestPlayerSession(db, tok.id)
+
+    expect(
+      await getSessionForRole(
+        cookieJar({ [DM_COOKIE]: dm.sessionId, [PLAYER_COOKIE]: player.sessionId }),
+        'player',
+        db
+      )
+    ).toMatchObject({ role: 'player' })
+
+    // And a stray DM-only cookie shouldn't satisfy a player request.
+    expect(
+      await getSessionForRole(cookieJar({ [DM_COOKIE]: dm.sessionId }), 'player', db)
+    ).toBeNull()
+  })
+
+  it('returns null for an expired session even with a present cookie', async () => {
+    const expired = await expiredSession(db, 'dm')
+    expect(await getSessionForRole(cookieJar({ [DM_COOKIE]: expired }), 'dm', db)).toBeNull()
   })
 })
 

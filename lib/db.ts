@@ -136,9 +136,10 @@ export async function initDB(client: Client = db) {
       })
     }
     // Log plaintext tokens so the DM can distribute them. Only happens on
-    // first run, and only outside production so a captured/forwarded prod log
-    // can't leak credentials. To re-print: delete the player_tokens rows.
-    if (process.env.NODE_ENV !== 'production') {
+    // first run AND only under `NODE_ENV === 'development'` — keeps tokens
+    // out of CI logs (NODE_ENV=test) and prod logs (NODE_ENV=production).
+    // To re-print: delete the player_tokens rows and restart `npm run dev`.
+    if (process.env.NODE_ENV === 'development') {
       console.log('\n=== PLAYER TOKENS (distribute these once; not logged again) ===')
       for (const seed of PLAYER_TOKEN_SEEDS) {
         console.log(`  ${seed.playerName.padEnd(7)} → ${seed.token.padEnd(8)} (${seed.characterName})`)

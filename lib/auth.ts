@@ -118,6 +118,20 @@ export async function getSessionFromCookies(
   return null
 }
 
+// Validate the cookie for a specific role only. Use this in role-scoped
+// surfaces (e.g. /dm/* layouts, /api/player/* routes) so a stale or
+// cross-role cookie can't shadow the one you actually need.
+export async function getSessionForRole(
+  cookieStore: CookieReader,
+  role: UserRole,
+  client: Client = defaultDb
+): Promise<SessionContext | null> {
+  const cookieName = role === 'dm' ? DM_COOKIE : PLAYER_COOKIE
+  const value = cookieStore.get(cookieName)?.value
+  if (!value) return null
+  return validateSession(value, role, client)
+}
+
 // `secure` is on in production only — localhost dev runs over plain http and
 // browsers refuse to set Secure cookies on http origins.
 export const SESSION_COOKIE_OPTIONS = {
