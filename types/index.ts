@@ -233,3 +233,37 @@ export interface ExportOptions {
   sessionRange?: { start: number; end: number }
   chapterRange?: { start: number; end: number }
 }
+
+// === Auth & Session Types ===
+
+export interface PlayerToken {
+  id: string
+  characterId: string
+  characterName: string
+  playerName: string
+  tokenHash: string
+  createdAt: string
+  lastActiveAt: string | null
+}
+
+export interface DmSession {
+  id: string
+  createdAt: string
+  expiresAt: string
+}
+
+export interface PlayerSession {
+  id: string
+  playerTokenId: string
+  createdAt: string
+  expiresAt: string
+}
+
+export type UserRole = 'dm' | 'player'
+
+export interface SessionContext {
+  role: UserRole
+  characterId?: string      // Only present for player role
+  characterName?: string    // Only present for player role
+  playerName?: string       // Only present for player role
+}

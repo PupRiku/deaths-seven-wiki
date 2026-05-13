@@ -1,57 +1,104 @@
 # Death's Seven Wiki — Claude Code Context
 
 ## What This Is
-A local Next.js DM tool for running **Death's Seven**, an original D&D 5e campaign. 20 chapters, Levels 3–20, four players. The app is used at the table during sessions.
+A local Next.js campaign companion for **Death's Seven**, an original D&D 5e campaign. 20 chapters, Levels 3–20, four players. The app is used at the table during sessions and ships **two role-scoped UIs in one process**: the DM wiki under `/dm/*`, and the player companion under `/player/*`.
 
 ## Stack
-- **Next.js 14 + TypeScript** (App Router)
-- **Tailwind CSS** + custom CSS variables (see `app/globals.css`)
-- **libSQL** (`@libsql/client`) for local SQLite — session notes, encounter state
+- **Next.js 16 + TypeScript** (App Router, React 19)
+- **Tailwind CSS v4** + custom CSS variables (see `app/globals.css`)
+- **libSQL** (`@libsql/client`) for local SQLite — session notes, encounter state, auth sessions
+- **Vitest + Testing Library** for unit/integration/component tests
 - Database file lives at `.wiki-data/wiki.db` (gitignored)
 
 ## Running Locally
 ```bash
 npm install
+cp .env.local.example .env.local   # then set DM_PASSPHRASE_HASH (see README)
 npm run dev
 # Opens at http://localhost:3000
 ```
 
+## Routes & Roles
+| URL              | Audience    | Auth gate                           |
+|------------------|-------------|-------------------------------------|
+| `/`              | anyone      | none — landing / role selector      |
+| `/join`          | players     | none — token entry                  |
+| `/dm/*`          | DM          | `dm_session` cookie                 |
+| `/player/*`      | players     | `player_session` cookie             |
+| `/api/auth/*`    | anyone      | none (login + logout)               |
+| `/api/dm/*`      | DM          | `dm_session` cookie                 |
+| `/api/player/*`  | players     | `player_session` cookie             |
+
+The DM passphrase comes from `DM_PASSPHRASE_HASH` (SHA-256) in `.env.local`. The four player tokens are auto-seeded into `player_tokens` on first DB init and printed once to the dev-server console (`PLAYER_TOKEN_SEEDS` in `lib/db.ts`). Sessions last 30 days, stored in `dm_sessions` / `player_sessions`.
+
 ## Project Structure
 ```
 app/
-  layout.tsx          # Root layout with Sidebar
-  page.tsx            # Home dashboard
-  chapters/           # Chapter navigator (lazy loads per chapter)
-  npcs/               # NPC + creature database with stat blocks
-  reference/          # Seven tabbed sections (Sins, Timeline, Party, etc.)
-  encounter/          # Initiative tracker, HP tracking, conditions
-  session-log/        # Live note capture + export to .md/.txt
+  layout.tsx              # Root layout — html/body/fonts/globals only
+  page.tsx                # Landing (role selector + DM passphrase form)
+  join/page.tsx           # Player token entry
+  dm/
+    layout.tsx            # DM layout (sidebar shell)
+    page.tsx              # DM dashboard
+    chapters/             # Chapter navigator
+    npcs/                 # NPC + creature database
+    reference/            # Seven tabbed reference sections
+    encounter/            # Initiative tracker
+    session-log/          # Live note capture + export
+    creatures/[id]        # Stat-block popout (used by CreatureLink)
+    players/              # Placeholder: player token management
+  player/
+    layout.tsx            # Player layout (header + bottom tabs)
+    page.tsx              # Dashboard shell
+    world/page.tsx        # World shell
+    party/page.tsx        # Party shell
+    journal/page.tsx      # Journal shell
   api/
-    chapters/         # GET ?number=N loads individual chapter
-    npcs/             # GET with ?q=, ?tag=, ?alignment= filters
-    notes/            # CRUD for session notes
-    export/           # POST generates .md or .txt download
+    auth/{dm,player,logout}/route.ts   # POST endpoints
+    dm/{chapters,npcs,notes,export}/route.ts  # DM data routes (auth-gated)
+    player/profile/route.ts            # Placeholder authenticated player API
+
+middleware.ts             # Edge-runtime cookie-presence gate for /dm /player /api/dm /api/player
 
 components/
-  ui/Sidebar.tsx      # Left nav (Tabler icons)
-  CreatureLink.tsx    # Inline creature link in chapter prose — hover card + pop-out window
+  dm/Sidebar.tsx          # DM left-nav (Tabler icons, sign-out, DM View badge)
+  player/BottomTabs.tsx   # Player bottom tab bar (Dashboard/World/Party/Journal)
+  player/PlayerShell.tsx  # Centered "Coming Soon" stub for empty player routes
+  shared/CampaignHeader   # Reusable "Death's Seven" branding
+  shared/ThemeProvider    # Stub for future role-based CSS variable overrides
+  CreatureLink.tsx        # Inline chapter-prose link → hover card + popout window
 
-data/
-  chapters/           # chapter01.ts through chapter20.ts + index.ts
-  npcs/index.ts       # Full NPC + creature database (~25 entries)
-  reference/index.ts  # All reference data (sins, locations, factions, items, mechanics, party, timeline)
+data/                     # Chapter, NPC, and reference content (unchanged)
 
 lib/
-  db.ts               # libSQL client + initDB()
-  colors.ts           # rgbaFromHex helper (hex → rgba). For CSS variables use color-mix() inline.
+  db.ts                   # libSQL client + initDB() (now also seeds player_tokens). Accepts an optional Client for tests.
+  auth.ts                 # Session helpers: hashToken, hashPassphrase, create/validate/deleteSession, getSessionFromCookies, getSessionForRole
+  colors.ts               # rgbaFromHex helper
 
-types/
-  index.ts            # All TypeScript interfaces
+tests/                    # Vitest. helpers/ provide in-memory libSQL DBs and session/token factories.
+                          # API integration tests use vi.mock('@/lib/db') + getter to swap in fresh in-memory DBs per test.
+
+types/index.ts            # All TypeScript interfaces (incl. PlayerToken, DmSession, PlayerSession, SessionContext, UserRole)
 
 docs/
-  VISUAL_LANGUAGE.md  # Source-of-truth design spec (palette, type scale, component patterns)
+  VISUAL_LANGUAGE.md      # Source-of-truth design spec
   IMPLEMENTATION_GUIDE.md
 ```
+
+### Auth/session model (cheat sheet)
+- **Two-layer gate.** Middleware (Edge runtime) only checks **cookie presence** — it can't hit libSQL. It redirects (`/dm/*` → `/?role=dm`, `/player/*` → `/join`) or returns 401 (`/api/dm/*`, `/api/player/*`) when the cookie is missing. Then **every** role-scoped surface re-validates against the DB:
+  - `app/dm/layout.tsx` and `app/player/layout.tsx` (async server components) call `getSessionForRole(await cookies(), role)` and `redirect()` on null.
+  - `/api/player/profile` and all four `/api/dm/*` handlers (`chapters`, `npcs`, `notes`, `export`) do the same and return 401 on null. `notes` factors this into a local `dmGuard()` helper since it has 4 method exports.
+- Use `getSessionForRole(cookieStore, role)` for role-scoped surfaces (no DM-priority shadowing). Use `getSessionFromCookies(cookieStore)` only for "any valid session" lookups (none today).
+- `createDmSession` / `createPlayerSession` insert a row with a 30-day expiry and return a `crypto.randomUUID()`. The session ID is the cookie value.
+- DM passphrase is hashed at compare time only — only the hash lives on disk in `.env.local`. Player tokens are stored as SHA-256 hashes in `player_tokens.token_hash`; plaintext only ever appears in console seed output and `lib/db.ts` `PLAYER_TOKEN_SEEDS`.
+- To rotate a player token: edit `PLAYER_TOKEN_SEEDS` then `DELETE FROM player_tokens` and restart the dev server (it'll reseed and reprint).
+
+### Test setup
+- `npm test` (one-off), `npm run test:watch`, `npm run test:coverage`.
+- Tests live under `tests/` mirroring `app/`, `lib/`, `components/`, `middleware.ts`.
+- DB tests use `tests/helpers/db.ts` `createTestDb()` for an isolated in-memory libSQL instance; **never** touch `.wiki-data/wiki.db` from tests.
+- Auth API integration tests pattern: `vi.mock('@/lib/db', ...)` exposes a getter for `db` and a wrapped `initDB()` that points at a per-test in-memory client (see `tests/integration/api/auth/dm.test.ts`).
 
 ## Design System
 Kingdom Hearts-inspired midnight-blue palette. Full spec at [docs/VISUAL_LANGUAGE.md](docs/VISUAL_LANGUAGE.md) — that file is the source of truth; this section is the cheat sheet.

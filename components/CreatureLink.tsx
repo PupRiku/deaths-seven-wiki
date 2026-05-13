@@ -89,7 +89,7 @@ export default function CreatureLink({ npc, displayText }: Props) {
     clearTimers()
     setOpen(false)
     window.open(
-      `/creatures/${npc.id}`,
+      `/dm/creatures/${npc.id}`,
       `creature-${npc.id}`,
       'width=480,height=780,resizable=yes,scrollbars=yes'
     )
