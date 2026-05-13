@@ -211,6 +211,14 @@ export async function initDB(client: Client = db) {
     console.log('✓ Database initialized at', dbPath)
     pathLogged = true
   }
+
+  // Sync the data-file entities into the reveal tables. Only run automatically
+  // for the singleton client — tests sync explicitly when they need to. The
+  // sync function has its own per-process latch.
+  if (client === db) {
+    const { syncReveals } = await import('@/lib/reveal-sync')
+    await syncReveals(client)
+  }
 }
 
 export async function getCampaignState(): Promise<Record<string, string>> {
