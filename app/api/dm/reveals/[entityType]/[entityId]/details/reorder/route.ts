@@ -35,6 +35,38 @@ export async function PATCH(
     )
   }
 
+  // Validate that the submitted order is an exact permutation of the
+  // entity's current detail IDs — no missing IDs (would leave duplicate
+  // sort_orders), no unknown IDs (silently ignored UPDATEs), no duplicates.
+  const current = await db.execute({
+    sql: `SELECT id FROM entity_custom_details WHERE entity_type = ? AND entity_id = ?`,
+    args: [entityType, entityId],
+  })
+  const currentIds = new Set(current.rows.map((r) => String(r.id)))
+  const submittedSet = new Set(order)
+  if (submittedSet.size !== order.length) {
+    return NextResponse.json(
+      { error: 'order contains duplicate ids' },
+      { status: 400 }
+    )
+  }
+  if (submittedSet.size !== currentIds.size) {
+    return NextResponse.json(
+      {
+        error: `order length ${submittedSet.size} does not match current detail count ${currentIds.size}`,
+      },
+      { status: 400 }
+    )
+  }
+  for (const id of submittedSet) {
+    if (!currentIds.has(id)) {
+      return NextResponse.json(
+        { error: `unknown detail id: ${id}` },
+        { status: 400 }
+      )
+    }
+  }
+
   // batch() is preferred over transaction() — it runs all statements on a
   // single connection, which works with libsql's `:memory:` test mode.
   await db.batch(

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const chapter = Number(body.chapter)
   const visibility = body.visibility
 
-  if (!Number.isFinite(chapter) || chapter < 1 || chapter > 20) {
+  if (!Number.isInteger(chapter) || chapter < 1 || chapter > 20) {
     return NextResponse.json(
       { error: 'chapter must be an integer 1-20' },
       { status: 400 }

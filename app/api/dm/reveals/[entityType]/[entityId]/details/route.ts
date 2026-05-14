@@ -36,6 +36,17 @@ export async function POST(
     )
   }
 
+  // Refuse to create orphan custom details — the entity must have an
+  // existing reveal row (i.e. it exists in the data files and has been
+  // synced). Otherwise these rows would be invisible everywhere.
+  const exists = await db.execute({
+    sql: `SELECT id FROM entity_reveals WHERE entity_type = ? AND entity_id = ? LIMIT 1`,
+    args: [entityType, entityId],
+  })
+  if (exists.rows.length === 0) {
+    return NextResponse.json({ error: 'Entity not found' }, { status: 404 })
+  }
+
   // Place new detail at the end of the existing list.
   const max = await db.execute({
     sql: `SELECT COALESCE(MAX(sort_order), -1) AS m FROM entity_custom_details

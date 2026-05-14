@@ -388,4 +388,145 @@ describe('Custom details CRUD', () => {
     )
     expect(r.rows.map((row) => row.id)).toEqual(['c', 'a', 'b'])
   })
+
+  it('reorder PATCH rejects a list missing existing detail ids', async () => {
+    await authedDm()
+    for (const [id, order] of [['a', 0], ['b', 1], ['c', 2]] as const) {
+      await memory.db!.execute({
+        sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+              VALUES (?, 'npc', 'fizzle', ?, 'X', 0, ?)`,
+        args: [id, id, order],
+      })
+    }
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/reorder/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ order: ['a', 'b'] }), // missing 'c'
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(400)
+  })
+
+  it('reorder PATCH rejects unknown detail ids', async () => {
+    await authedDm()
+    await memory.db!.execute({
+      sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+            VALUES ('a', 'npc', 'fizzle', 'a', 'X', 0, 0)`,
+    })
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/reorder/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ order: ['ghost-id'] }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(400)
+  })
+
+  it('reorder PATCH rejects duplicate ids in the list', async () => {
+    await authedDm()
+    for (const [id, order] of [['a', 0], ['b', 1]] as const) {
+      await memory.db!.execute({
+        sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+              VALUES (?, 'npc', 'fizzle', ?, 'X', 0, ?)`,
+        args: [id, id, order],
+      })
+    }
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/reorder/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ order: ['a', 'a'] }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(400)
+  })
+
+  it('POST custom detail returns 404 when the entity reveal row does not exist', async () => {
+    await authedDm()
+    const { POST } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/route'
+    )
+    const res = await POST(
+      new NextRequest('http://x', {
+        method: 'POST',
+        body: JSON.stringify({ title: 'X', content: 'Y' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'no-such-entity' }) }
+    )
+    expect(res.status).toBe(404)
+  })
+})
+
+describe('Bulk endpoints — count + validation hardening', () => {
+  it('POST /bulk reports rowsAffected, not entities.length (handles unknown ids gracefully)', async () => {
+    await authedDm()
+    const { POST } = await import('@/app/api/dm/reveals/bulk/route')
+    const res = await POST(
+      new NextRequest('http://x', {
+        method: 'POST',
+        body: JSON.stringify({
+          entities: [
+            { entityType: 'npc', entityId: 'fizzle' }, // exists
+            { entityType: 'npc', entityId: 'no-such-npc' }, // does not exist
+          ],
+          visibility: 'discovered',
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+    )
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.updated).toBe(1) // only the existing one — not the request length of 2
+  })
+
+  it('POST /bulk-chapter rejects non-integer chapter values like 1.5', async () => {
+    await authedDm()
+    const { POST } = await import('@/app/api/dm/reveals/bulk-chapter/route')
+    const res = await POST(
+      new NextRequest('http://x', {
+        method: 'POST',
+        body: JSON.stringify({ chapter: 1.5, visibility: 'discovered' }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+    )
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('GET /api/dm/reveals — strict filter validation', () => {
+  it('returns 400 for an invalid type filter value (instead of silently dropping)', async () => {
+    await authedDm()
+    const { GET } = await import('@/app/api/dm/reveals/route')
+    const res = await GET(new NextRequest('http://x/api/dm/reveals?type=bogus'))
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for an invalid visibility filter value', async () => {
+    await authedDm()
+    const { GET } = await import('@/app/api/dm/reveals/route')
+    const res = await GET(new NextRequest('http://x/api/dm/reveals?visibility=maybe'))
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for a non-integer chapter filter', async () => {
+    await authedDm()
+    const { GET } = await import('@/app/api/dm/reveals/route')
+    const res = await GET(new NextRequest('http://x/api/dm/reveals?chapter=1.5'))
+    expect(res.status).toBe(400)
+  })
 })

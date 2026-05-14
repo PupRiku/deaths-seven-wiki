@@ -21,17 +21,51 @@ export async function GET(req: NextRequest) {
   if (blocked) return blocked
 
   const { searchParams } = new URL(req.url)
-  const typeFilter = searchParams
-    .get('type')
-    ?.split(',')
-    .filter((t) => isValidEntityType(t)) as EntityType[] | undefined
-  const visibilityFilter = searchParams
-    .get('visibility')
-    ?.split(',')
-    .filter((v) => isValidVisibility(v)) as Visibility[] | undefined
-  const chapterFilter = searchParams.get('chapter')
-    ? Number(searchParams.get('chapter'))
-    : null
+
+  // Strict parse: any unknown value in `type` or `visibility` is a 400, not
+  // a silent drop. Silent dropping made `?type=bogus` return everything,
+  // which masked client bugs.
+  const rawTypes = searchParams.get('type')?.split(',')
+  let typeFilter: EntityType[] | undefined
+  if (rawTypes) {
+    for (const t of rawTypes) {
+      if (!isValidEntityType(t)) {
+        return NextResponse.json(
+          { error: `Invalid type filter value: ${t}` },
+          { status: 400 }
+        )
+      }
+    }
+    typeFilter = rawTypes as EntityType[]
+  }
+
+  const rawVis = searchParams.get('visibility')?.split(',')
+  let visibilityFilter: Visibility[] | undefined
+  if (rawVis) {
+    for (const v of rawVis) {
+      if (!isValidVisibility(v)) {
+        return NextResponse.json(
+          { error: `Invalid visibility filter value: ${v}` },
+          { status: 400 }
+        )
+      }
+    }
+    visibilityFilter = rawVis as Visibility[]
+  }
+
+  const chapterRaw = searchParams.get('chapter')
+  let chapterFilter: number | null = null
+  if (chapterRaw !== null) {
+    const n = Number(chapterRaw)
+    if (!Number.isInteger(n)) {
+      return NextResponse.json(
+        { error: 'chapter filter must be an integer' },
+        { status: 400 }
+      )
+    }
+    chapterFilter = n
+  }
+
   const search = searchParams.get('search')?.toLowerCase() ?? null
 
   const { reveals, fields, customDetails } = await loadReveals(db)

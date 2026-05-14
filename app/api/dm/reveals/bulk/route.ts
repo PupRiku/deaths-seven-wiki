@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   // libsql `batch()` runs all statements atomically on a single connection —
   // safer than `transaction()` for in-memory test databases where transactions
   // can split across connections.
-  await db.batch(
+  const results = await db.batch(
     entities.map((e) => ({
       sql: `UPDATE entity_reveals SET visibility = ?, updated_at = datetime('now')
             WHERE entity_type = ? AND entity_id = ?`,
@@ -48,5 +48,9 @@ export async function POST(req: NextRequest) {
     'write'
   )
 
-  return NextResponse.json({ success: true, updated: entities.length })
+  // Report actual rows affected, not the request length — protects the UI's
+  // confirmation summary from misleading counts when the client sends
+  // duplicates or stale IDs.
+  const updated = results.reduce((acc, r) => acc + Number(r.rowsAffected ?? 0), 0)
+  return NextResponse.json({ success: true, updated })
 }
