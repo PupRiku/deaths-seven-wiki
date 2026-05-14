@@ -20,6 +20,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'With the Party',
     arc: 'All',
+    appearance: "A tiny pixie with iridescent wings, barely six inches tall. Radiates a faint glow. Tends to gesture wildly when talking, occasionally falls asleep mid-sentence.",
     description: "A small, chaotic, deeply sincere pixie who has been with the party since they woke up in a field outside Janus being chased by goblins. Nyx's official messenger and the party's guide — though she admits she ended up following them instead of guiding them.",
     personality: "Cheerful, occasionally dramatic, genuinely caring. Covers distress with chatter. Falls asleep mid-sentence when exhausted. Cannot enter the Aspirant's mountain.",
     notes: [
@@ -71,6 +72,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Nova Clarus',
     arc: 'All',
+    appearance: "A composed half-elf in formal court attire. Carries himself with the bearing of royalty — straight posture, measured movements. Does not fill silences.",
     description: "The Crown Prince of Nova Clarus and secret founder of the Nova Sentinels. Right about his father being replaced — but was protecting himself from knowing too much, until the Summer Estate. Carries his father's letter.",
     personality: "Composed, loyal, privately frightened. Does not fill silences. Lets him win at sparring until age twelve then stopped.",
     notes: [
@@ -95,6 +97,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Nova Clarus — Sentinel HQ',
     arc: 'All',
+    appearance: "A half-orc woman in military dress. Steady posture, precise movements. Expression rarely changes. Speaks in a flat, level voice.",
     description: "The commanding officer of the Nova Sentinels. One of three people who knew the truth about the party's mission from the beginning. Steady, precise, gives bad news in a flat voice and then asks what you need.",
     personality: "Unflappable. Tactical. Finds each party member individually before they leave for the mountain. Does not make speeches.",
     notes: [
@@ -116,6 +119,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Nova Clarus — University',
     arc: 'All',
+    appearance: "A dwarf in stained workshop leathers and tinted goggles, often pushed up onto his forehead. Hands stained with metal dust. Sets things down carefully and intentionally.",
     description: "The Sentinel R&D artificer who identified the Relic Stone and sent the party to Darkon. Invented the Soul Siphon Modules. Discovers the receiver address in Ch.17 after an all-night analysis session.",
     personality: "Precise, self-critical, intensely focused. Sets things down carefully. Has been building something for each party member for weeks.",
     notes: [
@@ -139,6 +143,7 @@ export const npcs: NPC[] = [
     alignment: 'Neutral',
     location: 'Nova Clarus',
     arc: 'Act I',
+    appearance: "A human woman in a tailored Directorate uniform. Crisp, efficient bearing. Speaks in clipped sentences. Often carrying a clipboard or a stack of reports.",
     description: "Director of the Scion Directorate and commander of the Azure Piercer. Pragmatic, resource-focused. Helped the party escape Darkon aboard the Piercer.",
     personality: "Efficient. Dislikes unclear objectives. Will help if it serves the Directorate's interests.",
     notes: [
@@ -162,6 +167,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Gildmaw (The Fold)',
     arc: 'Ch.9 — Greed',
+    appearance: "A wiry human woman with weathered features and short, practical hair. Wears patched, layered clothing in browns and greys. Stands straighter than her station suggests.",
     description: "A former merchant of Casa Ornasca who now leads a small resistance cell from a hidden basement in the Fold. Lost everything in the usurpation. Has been waiting for something to change.",
     personality: "Tough. Briefly not tough. Then tough again. Does not weep dramatically.",
     notes: [
@@ -185,6 +191,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Gildmaw — Peridot Platypus',
     arc: 'Ch.9 — Greed',
+    appearance: "A weathered half-elf dock worker, sea-tanned and sun-lined. Wears practical sailor's clothing. Moves on a deck like he was born to it.",
     description: "A former crew member of the Peridot Platypus who stayed on under Avarus's flag because he had nowhere else to go. Has kept the ship ready since the Sin fell. Came with her to Nova Clarus.",
     personality: "Weathered. Ashamed. Reliable. Still calls Michael 'Captain'.",
     notes: [
@@ -207,6 +214,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Outside Mount Vorrath',
     arc: 'Ch.14 — Wrath',
+    appearance: "A human woman in mismatched scavenged armor. Lean, sun-burned, hair cropped short. Carries herself like a soldier even though her uniform is gone.",
     description: "A refugee commander who has been organizing survivors from Draven's conquered cities for two years. Lost eleven scouts getting maps of the volcano's exterior. Gives the maps freely.",
     personality: "Asks that they make it count. Does not ask for anything else.",
     notes: [
@@ -227,6 +235,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Somnara',
     arc: 'Ch.12 — Sloth',
+    appearance: "An older human man in a leather workshop apron over a tidy shirt. Gentle eyes, careful hands stained with clock-oil. Greying hair, glasses pushed up on his forehead.",
     description: "A clockmaker in Somnara who tended to his sleeping son and the sleeping city for months. The last waking resident until three days before the party arrived. His workshop is still warm.",
     personality: "Documented everything. Cultivated Dreamleaf Tea knowing someone would eventually come. Could not save his son himself.",
     notes: [
@@ -248,6 +257,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Somnara',
     arc: 'Ch.12 — Sloth',
+    appearance: "A small human boy of about ten, thin, with tousled dark hair. Wears simple home-spun clothes. Always seems to be holding or building some small contraption.",
     description: "A ten-year-old prodigy who was told his gifts meant nothing. His depression opened the door for the Sin of Sloth. His belief in Thorny McMugface contributed to Thorny's soul becoming real. Was asleep for months.",
     personality: "Still building things even in the nightmare loop. That is who Pip is.",
     notes: [
@@ -272,6 +282,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Glass Spire (hiding)',
     arc: 'Ch.13 — Envy',
+    appearance: "A human man in his mid-twenties dressed in a cobbler's worn work clothes. Hands have cobbler's calluses, but his posture remembers somewhere finer. Carries himself carefully.",
     description: "The sovereign lord's heir, fifteen when his parent was killed by Argente-Envy. Has been living as a cobbler in the Glass Spire's poorest district for a decade. Has been documenting everything.",
     personality: "Decided not to run when he saw the party coming. Has been waiting for someone to tell.",
     notes: [
@@ -294,6 +305,7 @@ export const npcs: NPC[] = [
     alignment: 'Ally',
     location: 'Nova Clarus University',
     arc: 'Ch.18 — True Reapers',
+    appearance: "A diminutive elderly gnome with white hair, wire-rim spectacles, and ink-stained fingertips. Wears scholar's robes that look genuinely old. Bright, alert eyes.",
     description: "An elderly gnome archivist who has been cataloguing the university's restricted wing for forty years. Has been waiting for someone with clearance to ask about the True Reapers.",
     personality: "Delighted. Was already pulling volumes before they finished explaining what they needed.",
     notes: [
@@ -318,6 +330,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Gildmaw — The Gilded Cage Penthouse',
     arc: 'Ch.9 — Greed',
+    appearance: "A tall, theatrical figure in an immaculate fur-trimmed coat of deep crimson and gold. Crystal-topped cane pulsing with sickly light. His skin ripples with liquid gold circulating just beneath the surface.",
     description: "A tall, theatrical figure in an immaculate fur-trimmed coat of deep crimson and gold. Crystal-topped cane pulsing with sickly light. His skin moves — slow lazy ripples of liquid gold circulating just beneath the surface.",
     personality: "Performative excess with genuine self-awareness underneath it. Knows exactly what he is. Chose it. Was afraid of going back to nothing.",
     notes: [
@@ -358,6 +371,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Veilmoor — Palace of Sighs',
     arc: 'Ch.10 — Lust',
+    appearance: "A regal figure in flowing court gowns, face hidden behind a diamond-encrusted mask. Pale, perfect skin where it shows. Moves with unnatural stillness between motions.",
     description: "Beneath the diamond mask: not a rotting face but a void. Pale perfect skin stretched over something that is not quite a face. A mouth full of needles arranged into a smile. Eyes that reflect the room back rather than looking out. Her host is Seraphel — a grieving widow consumed recently enough that the city still remembers who she was.",
     personality: "Craves adoration. Coldest person in the room. Cannot categorize Thornvatore and will not target him with Charm of Vanity.",
     notes: [
@@ -394,6 +408,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Outside Gula — IS The Maw',
     arc: 'Ch.11 — Gluttony',
+    appearance: "A vast, suspended human form fused into the walls of an organic chamber the size of a small mountain. Limbs grown into tissue. Mouth fused shut. Eyes still alive in a face that can no longer move.",
     description: "Magistrate Aldric Voss made a deal to end his city's famine. The Sin entered him and never left. He is not inside The Maw — he IS The Maw. His limbs became the walls. His stomach became the digestive core. The city of Gula was consumed by the man who was supposed to protect it.",
     personality: "Still conscious. Still remorseful. Cannot speak — mouth fused shut by tissue. Eyes track the party with unmistakable grief.",
     notes: [
@@ -436,6 +451,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Somnara — Dreamscape',
     arc: 'Ch.12 — Sloth',
+    appearance: "A vast figure woven from grey mist, seated on a throne shaped like a bed. Speaks at half-speed; every syllable has weight. Creates involuntary stillness around itself.",
     description: "The Sin of Sloth inhabited Pip through his depression. The Sleeper manifests in the dreamscape as a vast, slow, patient figure woven from grey mist, seated on a throne that looks like a bed. The host — Pip — is in a nightmare loop of the bullying that broke him.",
     personality: "Speaks at half speed. Every syllable its own small gravity. Creates involuntary stillness.",
     notes: [
@@ -474,6 +490,7 @@ export const npcs: NPC[] = [
     alignment: 'Complex',
     location: 'Glass Spire — Argente Palace',
     arc: 'Ch.13 — Envy',
+    appearance: "A young human noble in his mid-twenties, immaculately dressed in House Argente colors. Wears a porcelain house mask. Holds himself with rigid, almost performed control.",
     description: "Young — mid-twenties. Brilliant, controlled, and deeply uncomfortable in his own skin. Inherited the Sin of Envy from his parent along with the house leadership. Has been fighting it for ten years and losing.",
     personality: "Performing control rather than having it. Afraid of himself, not the party.",
     notes: [
@@ -497,6 +514,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Mount Vorrath',
     arc: 'Ch.14 — Wrath',
+    appearance: "A towering human in heavy crimson-and-black plate armor with a faceless visored helmet. Carries a massive blade. Moves with disciplined, unhurried precision. Silent in person.",
     description: "Born the third son of a minor noble family. Rose through military ranks faster than anyone in a generation. Passed over for Field Marshal three times — the third for a man he personally trained. The rage was always there. The Sin found a door that had been unlocked for twenty years.",
     personality: "Silent after the helmet comes off. Does not monologue. Prepared the antechamber hot spring for the party. Wants the fight to mean something.",
     notes: [
@@ -543,6 +561,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Nova Clarus — Royal Palace',
     arc: 'Ch.16 — Pride',
+    appearance: "An aging human king in royal regalia and ermine-trimmed robes. Wears the crown of Nova Clarus. Bearing of a long-reigning monarch — measured, magnetic, performatively warm.",
     description: "The Sin of Pride has been wearing King Kaelen's face for over a year. The real King knew he was replaced and wrote a letter hidden in his private study. The real King has been dead for over a year.",
     personality: "The performance is immaculate. 'Did she make it?' — genuine grief performance at the Summer Estate. Does not drop the face until the Soul Siphon hits.",
     notes: [
@@ -586,6 +605,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'The Summit Mountain',
     arc: 'All (revealed Ch.17)',
+    appearance: "A thin, weathered human man in worn travel-stained clothing. Hollow cheeks, weathered hands. Calm, attentive eyes. Stands very still.",
     description: "The man in Cell 6 of the Mountain Dungeon. The pathetic informant. The beggar who said 'Now go! And give that monster general hell for me.' He has been here the whole time. He designed their deaths. He designed their rebirths. He made two Relic Stones, implanted one in his own chest, and used the party to fill him with all seven Sins over the entire campaign.",
     personality: "Eleven years of patient planning. Genuinely curious about the party. Will answer questions honestly before the final fight — he has nothing to hide. 'I built you to.' The board in the lab could not draw Thorny. 'CANNOT CONFIRM VISUAL.'",
     notes: [
@@ -633,6 +653,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Old Summer Estate',
     arc: 'Ch.15 — Royal Trap',
+    appearance: "A captain of the royal guard in pristine palace livery. Tall, broad-shouldered, sword at his hip. His face occasionally seems to ripple, just slightly, just enough.",
     description: "The real Vorian has been in the palace dungeons since being replaced eight months ago. The doppelganger wore his face to attempt Leocraes's assassination at the Summer Estate.",
     personality: "No affect. No guilt. No hesitation. 'I am sorry, my Prince.' Not sorry.",
     notes: [
@@ -669,6 +690,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Nova Clarus (Ch.8 Siege)',
     arc: 'Ch.8 — Siege',
+    appearance: "An enormous orc in heavy battle armor, scarred from many campaigns. Eyes glow faintly red. Carries a brutal greataxe. Steam rises from his skin in cold air.",
     description: "General Draven's field commander for the Siege of Nova Clarus. Wrath-Infused, brutal, a proxy for the general the party wasn't ready to face yet.",
     personality: "Military. Overwhelming force. Does not negotiate.",
     notes: [
@@ -704,6 +726,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Mount Vorrath — Tier 2',
     arc: 'Ch.14 — Wrath',
+    appearance: "A human woman in her forties in officer's plate, scarred from sustained campaigning. Flat eyes. Hair pulled back in a tight braid. Stands very still when she's not moving.",
     description: "Draven's senior surviving lieutenant. A human woman in her forties with flat eyes. Chose Draven because Draven wins. No ideology. Pure pragmatism.",
     personality: "Cold calculation. At 50% HP she stops and negotiates — not surrender, assessment.",
     notes: [
@@ -743,6 +766,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Wilderness near Janus',
     arc: 'Ch.1 — The First Step',
+    appearance: "A scrawny green-skinned goblin in mismatched scavenged scraps. Yellow eyes, sharp teeth, clutching a chipped dagger. Travels in packs.",
     description: "A scrawny, scrappy goblin that travels in packs and fights like a coward — stab from cover, scatter when the odds turn. The party's first encounter in their new bodies.",
     personality: "Opportunistic. Cowardly. Locked onto a target and unwilling to break off until the pack is broken.",
     notes: [
@@ -782,6 +806,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'The Ruins of Janus',
     arc: 'Ch.1 — The First Step',
+    appearance: "A soldier in dark, soot-streaked plate armor. Eyes glow faintly red. Steam rises from exposed skin. Carries a heavy mace and a crossbow.",
     description: "A thug from Draven's army, infused with a fragment of Wrath. Eyes glow red. Steam rises from the skin. Fights aggressively, without mercy, and does not retreat.",
     personality: "No fear. No restraint. The Wrath-infusion strips off whatever hesitation a normal soldier might have — they fight until they fall.",
     notes: [
@@ -823,6 +848,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Gildmaw / Gildmaw Penthouse',
     arc: 'Ch.9 — Greed',
+    appearance: "A vaguely humanoid construct of hardened gold, joints clinking softly as it moves. Eyeless. Face is a flat coin-stamped surface.",
     description: "Constructs of hardened gold animated by the Sin of Greed. Burst into molten coins on death.",
     personality: "No personality — pure construct.",
     notes: [
@@ -857,6 +883,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Veilmoor — Palace of Sighs',
     arc: 'Ch.10 — Lust',
+    appearance: "An ordinary Veilmoor citizen — varied builds and races — dressed in fine masquerade attire. Each wears a featureless porcelain mask. Movements are stiff, dreamlike.",
     description: "Citizens of Veilmoor under the Matriarch's Charm, defending her instinctively. They are not enemies — they are victims. The party can spend an action attempting to remove their mask.",
     personality: "Compelled, not malicious. Will fight if mask is not removed.",
     notes: [
@@ -893,6 +920,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Mount Vorrath / Various',
     arc: 'Ch.8, Ch.14',
+    appearance: "A seasoned soldier in heat-blackened plate. Skin is dry — no sweat despite the volcano's heat. Eyes glow a steady, banked red. Carries a longsword.",
     description: "Standard soldiers from Draven's army, enhanced by the Sin of Wrath. They have been in the volcano's heat so long they no longer sweat. The Wrath-Infusion leaves when Draven falls.",
     personality: "Military discipline. Fight until incapacitated.",
     notes: [
@@ -928,6 +956,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Somnara Dreamscape',
     arc: 'Ch.12 — Sloth',
+    appearance: "A drifting, formless mass of grey mist with a single elongated mouth. Hovers silently. The air around it slows.",
     description: "Manifests in the corrupted zones of Pip's dreamscape where the Sin's influence has turned beautiful imagery hostile. Made of stolen stillness and grey mist.",
     personality: "No agenda — just the weight of stopped things.",
     notes: [
@@ -962,6 +991,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'Mountain Dungeon — Wave Fight',
     arc: 'Ch.17 — Sin Horde',
+    appearance: "A hollow-eyed translucent figure shaped like whatever it is currently coveting. Phases between forms as it moves.",
     description: "Manifests in the Sin Horde wave fight outside the Mountain Dungeon. Steals one party ability per round.",
     personality: "Pure want. No identity of its own.",
     notes: [

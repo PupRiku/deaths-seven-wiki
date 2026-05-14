@@ -63,6 +63,9 @@ export interface NPC {
   alignment: NPCAlignment
   location: string
   arc: string
+  // Physical-description-only field. Safe to show at the discovered reveal
+  // tier — must not contain plot, story context, or spoilers.
+  appearance: string
   description: string
   personality: string
   notes: string[]
@@ -267,3 +270,218 @@ export interface SessionContext {
   characterName?: string    // Only present for player role
   playerName?: string       // Only present for player role
 }
+
+// === Selective Reveal System ===
+
+export type EntityType = 'npc' | 'location' | 'faction' | 'item'
+export type Visibility = 'hidden' | 'discovered' | 'revealed'
+
+export interface EntityReveal {
+  id: string
+  entityType: EntityType
+  entityId: string
+  visibility: Visibility
+  discoveredName: string | null
+  chapterAssociation: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EntityFieldReveal {
+  id: string
+  entityType: EntityType
+  entityId: string
+  fieldName: string
+  isRevealed: boolean
+  revealedAt: string | null
+}
+
+export interface EntityCustomDetail {
+  id: string
+  entityType: EntityType
+  entityId: string
+  title: string
+  content: string
+  isRevealed: boolean
+  revealedAt: string | null
+  createdAt: string
+  sortOrder: number
+}
+
+// Faction and Item are stored in data/reference/index.ts as untyped const
+// objects. Re-declare the shapes the reveal system uses so we don't have to
+// retype them in lib/reveal-sync.ts or lib/reveal-filter.ts.
+export interface Faction {
+  id: string
+  name: string
+  type: string
+  alignment: string
+  color: string
+  leader: string
+  founder: string | null
+  description: string
+  keyMembers: string[]
+  notes: string[]
+  tags: string[]
+}
+
+export interface Item {
+  id: string
+  name: string
+  type: string
+  description: string
+  properties: string[]
+  notes: string
+  location?: string
+  chapter: number
+  tags: string[]
+}
+
+// LOCATIONS in data/reference uses `chapters: number[]` plus `keyLocations`
+// and a single `notes` string — a slight divergence from the typed Location
+// interface. The reveal system treats `chapters[0]` as the chapter association
+// and `notes` as a single field.
+export interface ReferenceLocation {
+  id: string
+  name: string
+  altName?: string
+  type: string
+  description: string
+  sinArc: SinName | null
+  chapters: number[]
+  keyLocations: string[]
+  npcsPresent?: string[]
+  notes: string
+  tags: string[]
+}
+
+// What a player sees. Hidden entities never become a PlayerEntity — they are
+// simply absent from the API response.
+//
+// Spoiler-protection rules:
+// - `pid` is an opaque hash of (entityType, entityId), never the source ID.
+//   Source IDs like "the-aspirant" or "relic-stone" leak plot through the
+//   network tab even when the displayName is masked.
+// - `tags` are NEVER returned to players — source tags include
+//   classifications like "boss", "sin host", "aspirant", "true reapers",
+//   which are themselves spoilers.
+// - At discovered tier: only physical-observable info. No image, no chapter
+//   association, no name, no description.
+// - At revealed tier: full base data + revealedFields gated per individual
+//   field reveal.
+export interface PlayerEntityBase {
+  pid: string
+  entityType: EntityType
+  visibility: 'discovered' | 'revealed'
+  displayName: string
+}
+
+export interface PlayerNpcDiscovered extends PlayerEntityBase {
+  entityType: 'npc'
+  visibility: 'discovered'
+  appearance: string
+}
+
+export interface PlayerNpcRevealed extends PlayerEntityBase {
+  entityType: 'npc'
+  visibility: 'revealed'
+  name: string
+  race: string
+  role: string | null
+  appearance: string
+  description: string
+  alignment: NPCAlignment
+  location: string
+  status: NPCStatus
+  image?: string
+  firstAppearance: number
+  revealedFields: {
+    role: string | null
+    personality: string | null
+    stat_block: StatBlock | null
+    notes: string[]
+  }
+  customDetails: Array<{ id: string; title: string; content: string }>
+}
+
+export interface PlayerLocationDiscovered extends PlayerEntityBase {
+  entityType: 'location'
+  visibility: 'discovered'
+  description: string // basic type info only
+}
+
+export interface PlayerLocationRevealed extends PlayerEntityBase {
+  entityType: 'location'
+  visibility: 'revealed'
+  name: string
+  altName: string | null
+  type: string
+  description: string
+  sinArc: SinName | null
+  chapters: number[]
+  revealedFields: {
+    keyLocations: string[]
+    // Opaque NPC pids, not raw source IDs. Player UI can cross-reference
+    // against /api/player/npcs by matching pid. Source IDs (e.g.
+    // "the-aspirant", "king-kaelen") are themselves spoilers.
+    npcsPresent: string[] | null
+    notes: string | null
+  }
+  customDetails: Array<{ id: string; title: string; content: string }>
+}
+
+export interface PlayerFactionDiscovered extends PlayerEntityBase {
+  entityType: 'faction'
+  visibility: 'discovered'
+  type: string
+  alignment: string
+  // No `color` at this tier — source values include CSS variable names like
+  // `var(--sin-envy)` that leak the sin/arc association of the faction.
+  // Color is only included at the revealed tier.
+}
+
+export interface PlayerFactionRevealed extends PlayerEntityBase {
+  entityType: 'faction'
+  visibility: 'revealed'
+  name: string
+  type: string
+  alignment: string
+  color: string
+  description: string
+  revealedFields: {
+    leader: string | null
+    founder: string | null
+    keyMembers: string[]
+    notes: string[]
+  }
+  customDetails: Array<{ id: string; title: string; content: string }>
+}
+
+export interface PlayerItemDiscovered extends PlayerEntityBase {
+  entityType: 'item'
+  visibility: 'discovered'
+  type: string
+}
+
+export interface PlayerItemRevealed extends PlayerEntityBase {
+  entityType: 'item'
+  visibility: 'revealed'
+  name: string
+  type: string
+  description: string
+  revealedFields: {
+    properties: string[]
+    notes: string | null
+  }
+  customDetails: Array<{ id: string; title: string; content: string }>
+}
+
+export type PlayerEntity =
+  | PlayerNpcDiscovered
+  | PlayerNpcRevealed
+  | PlayerLocationDiscovered
+  | PlayerLocationRevealed
+  | PlayerFactionDiscovered
+  | PlayerFactionRevealed
+  | PlayerItemDiscovered
+  | PlayerItemRevealed

@@ -22,6 +22,11 @@ describe('DM Sidebar', () => {
     expect(screen.getByRole('link', { name: /Manage Players/i })).toHaveAttribute('href', '/dm/players')
   })
 
+  it('contains a "Reveals" link to /dm/reveals', () => {
+    render(<Sidebar />)
+    expect(screen.getByRole('link', { name: /Reveals/i })).toHaveAttribute('href', '/dm/reveals')
+  })
+
   it('shows a DM View indicator', () => {
     render(<Sidebar />)
     expect(screen.getByLabelText(/DM View/i)).toBeInTheDocument()

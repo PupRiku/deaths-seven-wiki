@@ -10,6 +10,7 @@ import {
   IconNotebook,
   IconShieldCheck,
   IconLogout,
+  IconEye,
   type IconProps,
 } from '@tabler/icons-react'
 import type { ComponentType } from 'react'
@@ -35,6 +36,7 @@ const NAV: { label: string; items: { icon: NavIcon; label: string; href: string 
   {
     label: 'TABLE',
     items: [
+      { icon: IconEye, label: 'Reveals', href: '/dm/reveals' },
       { icon: IconUsers, label: 'Manage Players', href: '/dm/players' },
     ],
   },
