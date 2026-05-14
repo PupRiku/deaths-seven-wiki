@@ -32,6 +32,19 @@ export async function PATCH(
   if (visibility !== undefined && !isValidVisibility(visibility)) {
     return NextResponse.json({ error: 'Invalid visibility' }, { status: 400 })
   }
+  // Strict type check: discoveredName must be omitted, null, or a string.
+  // Without this, an object body would be coerced via String(...) and persist
+  // as "[object Object]", which players would then see as the display name.
+  if (
+    discoveredName !== undefined &&
+    discoveredName !== null &&
+    typeof discoveredName !== 'string'
+  ) {
+    return NextResponse.json(
+      { error: 'discoveredName must be a string or null' },
+      { status: 400 }
+    )
+  }
 
   // Confirm the row exists first so we can return 404 cleanly.
   const existing = await db.execute({
@@ -50,7 +63,8 @@ export async function PATCH(
   }
   if (discoveredName !== undefined) {
     updates.push('discovered_name = ?')
-    args.push(discoveredName === null ? null : String(discoveredName))
+    // Already validated above as string | null — no coercion needed.
+    args.push(discoveredName as string | null)
   }
   updates.push("updated_at = datetime('now')")
 

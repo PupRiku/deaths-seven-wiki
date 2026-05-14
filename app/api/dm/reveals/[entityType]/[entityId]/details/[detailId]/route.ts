@@ -33,10 +33,17 @@ export async function PATCH(
   const updates: string[] = []
   const args: (string | number | null)[] = []
   if (typeof body.title === 'string') {
+    // Mirror the POST invariant — title must be non-empty after trimming.
+    if (!body.title.trim()) {
+      return NextResponse.json({ error: 'title must not be blank' }, { status: 400 })
+    }
     updates.push('title = ?')
     args.push(body.title)
   }
   if (typeof body.content === 'string') {
+    if (!body.content.trim()) {
+      return NextResponse.json({ error: 'content must not be blank' }, { status: 400 })
+    }
     updates.push('content = ?')
     args.push(body.content)
   }

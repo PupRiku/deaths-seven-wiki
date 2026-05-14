@@ -293,6 +293,50 @@ describe('Custom details CRUD', () => {
     expect(Number(r.rows[0].sort_order)).toBe(0)
   })
 
+  it('PATCH rejects blank/whitespace title (mirrors POST invariant)', async () => {
+    await authedDm()
+    const detailId = 'det-blank-title'
+    await memory.db!.execute({
+      sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+            VALUES (?, 'npc', 'fizzle', 'Old', 'Old', 0, 0)`,
+      args: [detailId],
+    })
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/[detailId]/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ title: '   ' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle', detailId }) }
+    )
+    expect(res.status).toBe(400)
+  })
+
+  it('PATCH rejects blank content (mirrors POST invariant)', async () => {
+    await authedDm()
+    const detailId = 'det-blank-content'
+    await memory.db!.execute({
+      sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+            VALUES (?, 'npc', 'fizzle', 'Old', 'Old', 0, 0)`,
+      args: [detailId],
+    })
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/[detailId]/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ content: '' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle', detailId }) }
+    )
+    expect(res.status).toBe(400)
+  })
+
   it('PATCH updates title, content, and reveal state', async () => {
     await authedDm()
     const detailId = 'det-1'
@@ -528,5 +572,87 @@ describe('GET /api/dm/reveals — strict filter validation', () => {
     const { GET } = await import('@/app/api/dm/reveals/route')
     const res = await GET(new NextRequest('http://x/api/dm/reveals?chapter=1.5'))
     expect(res.status).toBe(400)
+  })
+})
+
+describe('PATCH /api/dm/reveals/:type/:id — discoveredName type validation', () => {
+  it('rejects an object discoveredName (would otherwise persist "[object Object]")', async () => {
+    await authedDm()
+    const { PATCH } = await import('@/app/api/dm/reveals/[entityType]/[entityId]/route')
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ discoveredName: { foo: 1 } }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(400)
+    // Confirm nothing was persisted.
+    const r = await memory.db!.execute({
+      sql: `SELECT discovered_name FROM entity_reveals WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    expect(r.rows[0].discovered_name).toBeNull()
+  })
+
+  it('rejects a number discoveredName', async () => {
+    await authedDm()
+    const { PATCH } = await import('@/app/api/dm/reveals/[entityType]/[entityId]/route')
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ discoveredName: 42 }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(400)
+  })
+
+  it('still accepts null (clears the discovered_name)', async () => {
+    await authedDm()
+    await memory.db!.execute({
+      sql: `UPDATE entity_reveals SET discovered_name = 'Old name' WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    const { PATCH } = await import('@/app/api/dm/reveals/[entityType]/[entityId]/route')
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ discoveredName: null }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(200)
+    const r = await memory.db!.execute({
+      sql: `SELECT discovered_name FROM entity_reveals WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    expect(r.rows[0].discovered_name).toBeNull()
+  })
+})
+
+describe('POST /api/dm/reveals/bulk — duplicate handling', () => {
+  it('deduplicates (entityType, entityId) pairs so updated count reflects distinct rows', async () => {
+    await authedDm()
+    const { POST } = await import('@/app/api/dm/reveals/bulk/route')
+    const res = await POST(
+      new NextRequest('http://x', {
+        method: 'POST',
+        body: JSON.stringify({
+          entities: [
+            { entityType: 'npc', entityId: 'fizzle' },
+            { entityType: 'npc', entityId: 'fizzle' }, // duplicate
+            { entityType: 'npc', entityId: 'fizzle' }, // duplicate
+            { entityType: 'npc', entityId: 'leocraes' },
+          ],
+          visibility: 'discovered',
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+    )
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    // Two distinct entities, regardless of how many times each was listed.
+    expect(data.updated).toBe(2)
   })
 })

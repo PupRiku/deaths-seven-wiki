@@ -36,11 +36,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Deduplicate (entityType, entityId) pairs before batching. Without this,
+  // a request that listed the same entity twice would run two UPDATEs and
+  // the rowsAffected sum would over-count: 2 instead of 1 distinct row
+  // changed. The summary count needs to reflect distinct rows.
+  const seen = new Set<string>()
+  const unique: Array<{ entityType: string; entityId: string }> = []
+  for (const e of entities) {
+    const key = `${e.entityType}:${e.entityId}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    unique.push({ entityType: e.entityType, entityId: e.entityId })
+  }
+
   // libsql `batch()` runs all statements atomically on a single connection —
   // safer than `transaction()` for in-memory test databases where transactions
   // can split across connections.
   const results = await db.batch(
-    entities.map((e) => ({
+    unique.map((e) => ({
       sql: `UPDATE entity_reveals SET visibility = ?, updated_at = datetime('now')
             WHERE entity_type = ? AND entity_id = ?`,
       args: [visibility, e.entityType, e.entityId],
@@ -48,9 +61,8 @@ export async function POST(req: NextRequest) {
     'write'
   )
 
-  // Report actual rows affected, not the request length — protects the UI's
-  // confirmation summary from misleading counts when the client sends
-  // duplicates or stale IDs.
+  // Sum of rowsAffected across the deduped batch — accurate count of
+  // distinct rows actually updated (existing entities only).
   const updated = results.reduce((acc, r) => acc + Number(r.rowsAffected ?? 0), 0)
   return NextResponse.json({ success: true, updated })
 }
