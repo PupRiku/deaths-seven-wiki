@@ -228,17 +228,11 @@ describe('GET /api/player/locations', () => {
     expect(data[0].revealedFields.keyLocations.length).toBe(1)
   })
 
-  it('revealed npcsPresent never leaks raw NPC source IDs (avarus, the-aspirant, etc.)', async () => {
-    // mountain-dungeon's source npcsPresent includes "the-aspirant".
-    await authedPlayer()
-    await setVisibility('location', 'mountain-dungeon', 'revealed')
-    await revealField('location', 'mountain-dungeon', 'npcsPresent')
-    const { GET } = await import('@/app/api/player/locations/route')
-    const res = await GET()
-    const body = JSON.stringify(await res.json())
-    expect(body).not.toContain('the-aspirant')
-    expect(body).not.toContain('avarus')
-  })
+  // Note: detailed npcsPresent filter behavior (drop hidden NPCs, emit pids
+  // only for visible ones) is exercised by the unit tests in
+  // tests/unit/lib/reveal-filter.test.ts using controlled fixture data.
+  // No location in data/reference/index.ts currently populates npcsPresent,
+  // so we can't trigger the live filter path through the route here.
 })
 
 describe('GET /api/player/factions', () => {

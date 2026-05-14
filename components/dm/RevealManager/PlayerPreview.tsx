@@ -1,11 +1,16 @@
 'use client'
 
-import { filterEntityForPlayer } from '@/lib/reveal-filter'
+import { filterEntityForPlayer, type FilterContext } from '@/lib/reveal-filter'
 import type { PlayerEntity } from '@/types'
 import type { RevealRecord } from './types'
 
 interface Props {
   record: RevealRecord
+  // Cross-entity context (e.g. NPC visibility for filtering location.npcsPresent).
+  // The DM preview must pass this so it matches what the player API would
+  // return — without it, the preview would show pids for hidden NPCs while
+  // the real player API would correctly hide them.
+  filterContext?: FilterContext
 }
 
 function previewBox(): React.CSSProperties {
@@ -21,13 +26,14 @@ function previewBox(): React.CSSProperties {
 // "See as Player" — calls the SAME filterEntityForPlayer the Player API uses.
 // If this preview shows it, the player sees it. If this hides it, the player
 // doesn't. There is no second source of truth.
-export default function PlayerPreview({ record }: Props) {
+export default function PlayerPreview({ record, filterContext }: Props) {
   const entity = filterEntityForPlayer(
     record.entity,
     record.reveal.entityType,
     record.reveal,
     record.fields,
-    record.customDetails
+    record.customDetails,
+    filterContext
   )
 
   return (

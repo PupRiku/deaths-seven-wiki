@@ -5,6 +5,7 @@ import FilterBar from './FilterBar'
 import EntityRow from './EntityRow'
 import DetailPanel from './DetailPanel'
 import BulkActions from './BulkActions'
+import { buildVisibilityIndex } from '@/lib/reveal-filter'
 import type { EntityType, RevealRecord, Visibility } from './types'
 
 function entityKey(entityType: EntityType, entityId: string) {
@@ -62,6 +63,14 @@ export default function RevealManager() {
       return true
     })
   }, [records, typeFilter, visibilityFilter, chapterFilter, search])
+
+  // Derived from ALL records (not the filtered list) so the preview matches
+  // what the player API would actually return — visibility filtering on the
+  // DM's view doesn't change what other entities the player can see.
+  const filterContext = useMemo(() => {
+    if (!records) return undefined
+    return buildVisibilityIndex(records.map((r) => r.reveal))
+  }, [records])
 
   function patchLocalReveal(key: string, patch: Partial<RevealRecord['reveal']>) {
     setRecords((rs) =>
@@ -539,6 +548,7 @@ export default function RevealManager() {
                 {expanded && (
                   <DetailPanel
                     record={record}
+                    filterContext={filterContext}
                     onPatchVisibilityName={(name) => setDiscoveredName(record, name)}
                     onToggleField={(fieldName, isRevealed) =>
                       toggleField(record, fieldName, isRevealed)

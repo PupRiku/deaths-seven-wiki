@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import PlayerPreview from './PlayerPreview'
+import type { FilterContext } from '@/lib/reveal-filter'
 import type {
   EntityCustomDetail,
   EntityFieldReveal,
@@ -22,6 +23,9 @@ interface Props {
   ) => Promise<void>
   onDeleteDetail: (detailId: string) => Promise<void>
   onReorderDetails: (order: string[]) => Promise<void>
+  // Cross-entity context (e.g. NPC visibility for filtering location.npcsPresent).
+  // Threaded down to PlayerPreview so its output exactly matches the player API.
+  filterContext?: FilterContext
 }
 
 function fieldLabel(name: string): string {
@@ -65,6 +69,7 @@ export default function DetailPanel({
   onUpdateDetail,
   onDeleteDetail,
   onReorderDetails,
+  filterContext,
 }: Props) {
   const [discoveredName, setDiscoveredName] = useState(record.reveal.discoveredName ?? '')
   // Resync local input state when the prop changes (e.g. the parent rolled
@@ -122,7 +127,7 @@ export default function DetailPanel({
         </button>
       </div>
 
-      {showPreview && <PlayerPreview record={record} />}
+      {showPreview && <PlayerPreview record={record} filterContext={filterContext} />}
 
       <FieldRevealsList
         entity={record.entity}

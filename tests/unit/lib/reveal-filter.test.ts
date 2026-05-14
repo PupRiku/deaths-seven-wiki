@@ -370,24 +370,51 @@ describe('filterEntityForPlayer - Location', () => {
     expect(flat.revealedFields.notes).toBeNull()
   })
 
-  it('revealed npcsPresent returns opaque pids, not raw NPC source IDs', () => {
-    const out = filterEntityForPlayer(
+  it('revealed npcsPresent omits hidden NPCs entirely (not even an opaque pid)', () => {
+    // sampleLocation has npcsPresent: ['avarus']. With no NPC visibility info
+    // OR with avarus explicitly hidden, the field must be empty — emitting
+    // even a pid for a hidden NPC leaks its existence/count.
+    const noContext = filterEntityForPlayer(
       sampleLocation,
       'location',
       reveal({ entityType: 'location', entityId: 'gildmaw', visibility: 'revealed' }),
       [field('location', 'gildmaw', 'npcsPresent', true)],
       []
     )
+    expect(
+      (noContext as unknown as { revealedFields: { npcsPresent: string[] } }).revealedFields
+        .npcsPresent
+    ).toEqual([])
+
+    const hiddenContext = filterEntityForPlayer(
+      sampleLocation,
+      'location',
+      reveal({ entityType: 'location', entityId: 'gildmaw', visibility: 'revealed' }),
+      [field('location', 'gildmaw', 'npcsPresent', true)],
+      [],
+      { npcVisibilityById: new Map([['avarus', 'hidden']]) }
+    )
+    expect(
+      (hiddenContext as unknown as { revealedFields: { npcsPresent: string[] } })
+        .revealedFields.npcsPresent
+    ).toEqual([])
+  })
+
+  it('revealed npcsPresent emits opaque pids only for NPCs the player can also see', () => {
+    const out = filterEntityForPlayer(
+      sampleLocation,
+      'location',
+      reveal({ entityType: 'location', entityId: 'gildmaw', visibility: 'revealed' }),
+      [field('location', 'gildmaw', 'npcsPresent', true)],
+      [],
+      { npcVisibilityById: new Map([['avarus', 'discovered']]) }
+    )
     const flat = out as unknown as {
-      revealedFields: { npcsPresent: string[] | null }
+      revealedFields: { npcsPresent: string[] }
     }
-    expect(flat.revealedFields.npcsPresent).not.toBeNull()
-    // Source ids "avarus" must NOT appear in the response.
-    for (const id of flat.revealedFields.npcsPresent!) {
-      expect(id).not.toBe('avarus')
-      expect(typeof id).toBe('string')
-      expect(id.length).toBeGreaterThan(0)
-    }
+    expect(flat.revealedFields.npcsPresent.length).toBe(1)
+    // Source id "avarus" must NOT appear in the response — only the pid.
+    expect(flat.revealedFields.npcsPresent[0]).not.toBe('avarus')
     expect(JSON.stringify(flat.revealedFields.npcsPresent)).not.toContain('avarus')
   })
 })

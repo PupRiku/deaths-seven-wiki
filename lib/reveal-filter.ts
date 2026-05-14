@@ -35,9 +35,33 @@ import type {
   EntityFieldReveal,
   EntityCustomDetail,
   PlayerEntity,
+  Visibility,
 } from '@/types'
 
 type FilterableEntity = NPC | ReferenceLocation | Faction | Item
+
+// Cross-entity visibility lookup, used for fields that reference other
+// entities by id (today: location.npcsPresent → NPC). Without this, a
+// revealed `npcsPresent` field would emit pids for NPCs that are themselves
+// `hidden` — leaking the existence (and count) of hidden NPCs even though
+// their identities stay opaque. The hidden-tier contract requires complete
+// absence from player responses.
+export interface FilterContext {
+  npcVisibilityById: Map<string, Visibility>
+}
+
+// Convenience: build the visibility index from the full reveals list that
+// `loadReveals` already returns. Routes and the DM preview both call this
+// so they pass an identical context into filterEntityForPlayer.
+export function buildVisibilityIndex(reveals: EntityReveal[]): FilterContext {
+  const npcVisibilityById = new Map<string, Visibility>()
+  for (const r of reveals) {
+    if (r.entityType === 'npc') {
+      npcVisibilityById.set(r.entityId, r.visibility)
+    }
+  }
+  return { npcVisibilityById }
+}
 
 // Deterministic per-(type, id) opaque ID. Stable across requests, but does
 // not reveal the source entityId.
@@ -180,7 +204,8 @@ function filterLocation(
   loc: ReferenceLocation,
   reveal: EntityReveal,
   fields: EntityFieldReveal[],
-  customDetails: EntityCustomDetail[]
+  customDetails: EntityCustomDetail[],
+  context?: FilterContext
 ): PlayerEntity | null {
   if (reveal.visibility === 'hidden') return null
 
@@ -212,10 +237,21 @@ function filterLocation(
       keyLocations: revealedArrayByIndex(fields, 'keyLocations', loc.keyLocations),
       // Map source NPC IDs through the same opaquePid the npcs endpoint
       // uses, so the player UI can cross-reference without leaking that
-      // this location is associated with e.g. "the-aspirant".
+      // this location is associated with e.g. "the-aspirant". CRITICALLY,
+      // also drop any NPC whose own reveal row is `hidden` — emitting an
+      // opaque pid for a hidden NPC still leaks its existence and count
+      // (and the player UI would notice the orphan pid that doesn't appear
+      // in /api/player/npcs). If the visibility index is missing (caller
+      // didn't pass one), we conservatively drop everything rather than
+      // fall back to leaking.
       npcsPresent:
         isFieldRevealed(fields, 'npcsPresent') && loc.npcsPresent
-          ? loc.npcsPresent.map((id) => opaquePid('npc', id))
+          ? loc.npcsPresent
+              .filter((id) => {
+                const v = context?.npcVisibilityById?.get(id)
+                return v === 'discovered' || v === 'revealed'
+              })
+              .map((id) => opaquePid('npc', id))
           : null,
       notes: isFieldRevealed(fields, 'notes') ? loc.notes : null,
     },
@@ -319,7 +355,8 @@ export function filterEntityForPlayer(
   entityType: EntityType,
   reveal: EntityReveal,
   fields: EntityFieldReveal[],
-  customDetails: EntityCustomDetail[]
+  customDetails: EntityCustomDetail[],
+  context?: FilterContext
 ): PlayerEntity | null {
   // Defensive: only return data for this exact entity. If the caller pairs
   // the wrong entity object with a reveal row, OR passes field/detail rows
@@ -341,7 +378,8 @@ export function filterEntityForPlayer(
         entity as ReferenceLocation,
         reveal,
         ownFields,
-        ownDetails
+        ownDetails,
+        context
       )
     case 'faction':
       return filterFaction(entity as Faction, reveal, ownFields, ownDetails)
