@@ -65,6 +65,18 @@ export default function DetailPanel({
   onReorderDetails,
 }: Props) {
   const [discoveredName, setDiscoveredName] = useState(record.reveal.discoveredName ?? '')
+  // Resync local input state when the prop changes (e.g. the parent rolled
+  // back a failed PATCH). React 19-recommended pattern: track the previous
+  // prop value alongside the state and reset during render when it shifts.
+  // Avoids the useEffect+setState anti-pattern.
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevDiscoveredNameProp, setPrevDiscoveredNameProp] = useState(
+    record.reveal.discoveredName
+  )
+  if (prevDiscoveredNameProp !== record.reveal.discoveredName) {
+    setPrevDiscoveredNameProp(record.reveal.discoveredName)
+    setDiscoveredName(record.reveal.discoveredName ?? '')
+  }
   const [showPreview, setShowPreview] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newContent, setNewContent] = useState('')
