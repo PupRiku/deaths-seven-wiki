@@ -187,7 +187,7 @@ describe('GET /api/player/locations', () => {
     expect(res.status).toBe(401)
   })
 
-  it('discovered locations show type only — not full description', async () => {
+  it('discovered locations show sanitized type only — strips "— Sin Arc" suffix', async () => {
     await authedPlayer()
     await setVisibility('location', 'gildmaw', 'discovered', 'A casino city')
     const { GET } = await import('@/app/api/player/locations/route')
@@ -195,8 +195,25 @@ describe('GET /api/player/locations', () => {
     const data = await res.json()
     expect(data.length).toBe(1)
     expect(data[0].displayName).toBe('A casino city')
-    expect(data[0].description).toBe('City — Sin Arc')
+    // Source type is "City — Sin Arc"; the suffix would leak the arc.
+    expect(data[0].description).toBe('City')
     expect(data[0].name).toBeUndefined()
+  })
+
+  it('discovered locations: type sanitizer never leaks "Sin Arc", "Act III", or "Story" anywhere', async () => {
+    await authedPlayer()
+    // gildmaw type "City — Sin Arc"; aspirant-mountain type "Dungeon — Act III";
+    // old-summer-estate type "Location — Story"; mountain-dungeon "Dungeon — Acts I & III".
+    for (const id of ['gildmaw', 'aspirant-mountain', 'old-summer-estate', 'mountain-dungeon']) {
+      await setVisibility('location', id, 'discovered', '???')
+    }
+    const { GET } = await import('@/app/api/player/locations/route')
+    const res = await GET()
+    const body = JSON.stringify(await res.json())
+    expect(body).not.toContain('Sin Arc')
+    expect(body).not.toContain('Act III')
+    expect(body).not.toContain('Acts I')
+    expect(body).not.toContain('Story')
   })
 
   it('revealed locations include real description and gated keyLocations', async () => {
@@ -244,6 +261,25 @@ describe('GET /api/player/factions', () => {
 })
 
 describe('GET /api/player/items', () => {
+  it('discovered items: type sanitizer strips "(Fabricated)" / "(Ancient)" plot qualifiers', async () => {
+    await authedPlayer()
+    // relic-stone source type is "Artifact (Fabricated)" — the qualifier
+    // tells the player it was made (vs ancient).
+    await setVisibility('item', 'relic-stone', 'discovered', 'A strange stone')
+    // true-reapers source type is "Divine Weapons (Ancient)" — stronger leak.
+    await setVisibility('item', 'true-reapers', 'discovered', 'Old weapons')
+    const { GET } = await import('@/app/api/player/items/route')
+    const res = await GET()
+    const data = await res.json()
+    const body = JSON.stringify(data)
+    expect(body).not.toContain('Fabricated')
+    expect(body).not.toContain('Ancient')
+    const relic = data.find((i: { displayName: string }) => i.displayName === 'A strange stone')
+    expect(relic.type).toBe('Artifact')
+    const reapers = data.find((i: { displayName: string }) => i.displayName === 'Old weapons')
+    expect(reapers.type).toBe('Divine Weapons')
+  })
+
   it('discovered items show found-name, not true name', async () => {
     await authedPlayer()
     await setVisibility('item', 'relic-stone', 'discovered', 'A strange stone')

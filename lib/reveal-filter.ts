@@ -19,7 +19,6 @@
 // - firstAppearance chapter (tells the player when an unknown NPC matters)
 // - Real name, description, role, personality, notes, statBlock, custom details
 
-import crypto from 'crypto'
 import type {
   NPC,
   ReferenceLocation,
@@ -35,14 +34,28 @@ import type {
 type FilterableEntity = NPC | ReferenceLocation | Faction | Item
 
 // Deterministic per-(type, id) opaque ID. Stable across requests, but does
-// not reveal the source entityId. Truncated SHA-256 hex — collisions across
-// the small entity set are practically impossible.
+// not reveal the source entityId.
+//
+// Implementation: two independent 32-bit FNV-1a hashes seeded with different
+// constants, concatenated to 16 hex chars. Pure JS — works in both Node and
+// the browser, so it can ship in the client bundle that powers the DM
+// "See as Player" preview. Not a cryptographic hash, and doesn't need to
+// be: pid is just a stable handle that doesn't reveal the source id, and
+// the entity set is tiny (~50), so collision risk is negligible.
 function opaquePid(entityType: EntityType, entityId: string): string {
-  return crypto
-    .createHash('sha256')
-    .update(`${entityType}:${entityId}`)
-    .digest('hex')
-    .slice(0, 16)
+  const input = `${entityType}:${entityId}`
+  let h1 = 0x811c9dc5 // FNV offset basis
+  let h2 = 0x9dc5811c // distinct seed for the second half
+  const FNV_PRIME = 0x01000193
+  for (let i = 0; i < input.length; i++) {
+    const c = input.charCodeAt(i)
+    h1 = Math.imul(h1 ^ c, FNV_PRIME)
+    h2 = Math.imul(h2 ^ c, FNV_PRIME)
+  }
+  return (
+    (h1 >>> 0).toString(16).padStart(8, '0') +
+    (h2 >>> 0).toString(16).padStart(8, '0')
+  )
 }
 
 function isFieldRevealed(fields: EntityFieldReveal[], name: string): boolean {
@@ -83,6 +96,21 @@ function revealedCustomDetails(
 
 function discoveredDisplayName(reveal: EntityReveal): string {
   return reveal.discoveredName ?? '???'
+}
+
+// Strip plot-revealing qualifiers from a `type` string before showing it
+// at the discovered tier. Source data uses suffixes like `— Sin Arc`,
+// `— Act III`, `— Story`, or parenthesized notes like `(Fabricated)` and
+// `(Ancient)` that themselves carry plot information. We keep only the
+// neutral kind word(s) before the first em-dash or open-paren.
+//
+//   "City — Sin Arc"          -> "City"
+//   "Dungeon — Acts I & III"  -> "Dungeon"
+//   "Artifact (Fabricated)"   -> "Artifact"
+//   "Magitech Airship"        -> "Magitech Airship" (unchanged, no markers)
+//   "Magic Weapon — Warhammer"-> "Magic Weapon"
+function safeTypeForDiscovered(raw: string): string {
+  return raw.split(/[—(]/)[0].trim()
 }
 
 // === NPC ===
@@ -153,9 +181,8 @@ function filterLocation(
       entityType: 'location',
       visibility: 'discovered',
       displayName: discoveredDisplayName(reveal),
-      // Show the type ("City", "Dungeon", etc.) at discovered tier — that
-      // is just structural metadata, not a spoiler.
-      description: loc.type,
+      // Sanitized so suffixes like "— Sin Arc" or "— Act III" don't leak.
+      description: safeTypeForDiscovered(loc.type),
     }
   }
 
@@ -200,7 +227,9 @@ function filterFaction(
       entityType: 'faction',
       visibility: 'discovered',
       displayName: discoveredDisplayName(reveal),
-      type: faction.type,
+      // Defensive: same sanitizer as locations/items in case faction types
+      // ever grow plot suffixes (today's values are already clean).
+      type: safeTypeForDiscovered(faction.type),
       alignment: faction.alignment,
       color: faction.color,
     }
@@ -246,7 +275,9 @@ function filterItem(
       // Discovered items use the in-world found name (discovered_name) —
       // never the true name.
       displayName: discoveredDisplayName(reveal),
-      type: item.type,
+      // Sanitized: "Artifact (Fabricated)" -> "Artifact", "Divine Weapons
+      // (Ancient)" -> "Divine Weapons". The qualifiers are themselves spoilers.
+      type: safeTypeForDiscovered(item.type),
     }
   }
 
