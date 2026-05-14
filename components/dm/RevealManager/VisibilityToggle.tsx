@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import type { Visibility } from './types'
 
 const SEGMENTS: { value: Visibility; label: string; aria: string; color: string }[] = [
@@ -15,11 +16,46 @@ interface Props {
 
 // Three-state segmented toggle. Designed to be reachable mid-session — a
 // single tap commits the new state immediately (no save button).
+//
+// Keyboard: implements WAI-ARIA roving tabindex pattern for radiogroup.
+// The selected segment is in the tab order; ArrowLeft/ArrowRight (and
+// ArrowUp/ArrowDown) move selection AND fire onChange. Home/End jump
+// to first/last segment.
 export default function VisibilityToggle({ value, onChange }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const selectedIndex = SEGMENTS.findIndex((s) => s.value === value)
+
+  function focusSegment(index: number) {
+    const buttons = containerRef.current?.querySelectorAll<HTMLButtonElement>(
+      'button[role="radio"]'
+    )
+    buttons?.[index]?.focus()
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    let nextIndex: number | null = null
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      nextIndex = (selectedIndex + 1) % SEGMENTS.length
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      nextIndex = (selectedIndex - 1 + SEGMENTS.length) % SEGMENTS.length
+    } else if (e.key === 'Home') {
+      nextIndex = 0
+    } else if (e.key === 'End') {
+      nextIndex = SEGMENTS.length - 1
+    }
+    if (nextIndex !== null) {
+      e.preventDefault()
+      onChange(SEGMENTS[nextIndex].value)
+      focusSegment(nextIndex)
+    }
+  }
+
   return (
     <div
+      ref={containerRef}
       role="radiogroup"
       aria-label="Visibility"
+      onKeyDown={handleKeyDown}
       style={{
         display: 'inline-flex',
         border: '0.5px solid var(--border)',
@@ -27,7 +63,7 @@ export default function VisibilityToggle({ value, onChange }: Props) {
         overflow: 'hidden',
       }}
     >
-      {SEGMENTS.map((seg) => {
+      {SEGMENTS.map((seg, i) => {
         const active = seg.value === value
         return (
           <button
@@ -36,7 +72,13 @@ export default function VisibilityToggle({ value, onChange }: Props) {
             role="radio"
             aria-checked={active}
             aria-label={seg.aria}
-            onClick={() => onChange(seg.value)}
+            // Roving tabindex: only the selected segment is tab-reachable;
+            // the others are reached via arrow keys.
+            tabIndex={active ? 0 : -1}
+            onClick={() => {
+              onChange(seg.value)
+              focusSegment(i)
+            }}
             style={{
               fontFamily: 'var(--font-heading)',
               fontSize: '0.75rem',

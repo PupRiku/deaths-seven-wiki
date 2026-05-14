@@ -203,6 +203,8 @@ export default function RevealManager() {
     patch: { title?: string; content?: string; isRevealed?: boolean }
   ) {
     const key = entityKey(record.reveal.entityType, record.reveal.entityId)
+    // Snapshot current details so we can roll back on failure.
+    const previous = record.customDetails
     setRecords((rs) =>
       rs
         ? rs.map((rec) =>
@@ -217,18 +219,32 @@ export default function RevealManager() {
           )
         : rs
     )
-    await fetch(
-      `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}/details/${detailId}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch),
-      }
-    )
+    try {
+      const r = await fetch(
+        `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}/details/${detailId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch),
+        }
+      )
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+    } catch {
+      setRecords((rs) =>
+        rs
+          ? rs.map((rec) =>
+              entityKey(rec.reveal.entityType, rec.reveal.entityId) === key
+                ? { ...rec, customDetails: previous }
+                : rec
+            )
+          : rs
+      )
+    }
   }
 
   async function deleteDetail(record: RevealRecord, detailId: string) {
     const key = entityKey(record.reveal.entityType, record.reveal.entityId)
+    const previous = record.customDetails
     setRecords((rs) =>
       rs
         ? rs.map((rec) =>
@@ -241,17 +257,81 @@ export default function RevealManager() {
           )
         : rs
     )
-    await fetch(
-      `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}/details/${detailId}`,
-      { method: 'DELETE' }
+    try {
+      const r = await fetch(
+        `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}/details/${detailId}`,
+        { method: 'DELETE' }
+      )
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+    } catch {
+      setRecords((rs) =>
+        rs
+          ? rs.map((rec) =>
+              entityKey(rec.reveal.entityType, rec.reveal.entityId) === key
+                ? { ...rec, customDetails: previous }
+                : rec
+            )
+          : rs
+      )
+    }
+  }
+
+  async function reorderDetails(record: RevealRecord, order: string[]) {
+    const key = entityKey(record.reveal.entityType, record.reveal.entityId)
+    const previous = record.customDetails
+    // Apply the new order locally first (sort_order = index).
+    const reordered = order
+      .map((id, i) => {
+        const d = previous.find((x) => x.id === id)
+        return d ? { ...d, sortOrder: i } : null
+      })
+      .filter((d): d is NonNullable<typeof d> => d !== null)
+    setRecords((rs) =>
+      rs
+        ? rs.map((rec) =>
+            entityKey(rec.reveal.entityType, rec.reveal.entityId) === key
+              ? { ...rec, customDetails: reordered }
+              : rec
+          )
+        : rs
     )
+    try {
+      const r = await fetch(
+        `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}/details/reorder`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order }),
+        }
+      )
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+    } catch {
+      setRecords((rs) =>
+        rs
+          ? rs.map((rec) =>
+              entityKey(rec.reveal.entityType, rec.reveal.entityId) === key
+                ? { ...rec, customDetails: previous }
+                : rec
+            )
+          : rs
+      )
+    }
   }
 
   async function bulkVisibility(v: Visibility) {
-    const entities = Array.from(selected).map((k) => {
+    const selectedKeys = Array.from(selected)
+    const entities = selectedKeys.map((k) => {
       const [entityType, entityId] = k.split(':')
       return { entityType, entityId }
     })
+    // Snapshot the prior visibility per affected record so we can roll back.
+    const priorVisibility = new Map<string, Visibility>()
+    if (records) {
+      for (const r of records) {
+        const k = entityKey(r.reveal.entityType, r.reveal.entityId)
+        if (selected.has(k)) priorVisibility.set(k, r.reveal.visibility)
+      }
+    }
     setRecords((rs) =>
       rs
         ? rs.map((r) =>
@@ -261,22 +341,61 @@ export default function RevealManager() {
           )
         : rs
     )
-    await fetch('/api/dm/reveals/bulk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entities, visibility: v }),
-    })
-    setSelected(new Set())
+    try {
+      const r = await fetch('/api/dm/reveals/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entities, visibility: v }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      setSelected(new Set())
+    } catch {
+      setRecords((rs) =>
+        rs
+          ? rs.map((r) => {
+              const k = entityKey(r.reveal.entityType, r.reveal.entityId)
+              const prior = priorVisibility.get(k)
+              return prior !== undefined
+                ? { ...r, reveal: { ...r.reveal, visibility: prior } }
+                : r
+            })
+          : rs
+      )
+    }
   }
 
-  async function bulkChapter(chapter: number, v: Visibility) {
-    const r = await fetch('/api/dm/reveals/bulk-chapter', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chapter, visibility: v }),
-    })
-    if (!r.ok) return null
-    const data = await r.json()
+  // Two-phase chapter bulk: phase 1 returns the entities that WOULD change
+  // (no DB writes — read-only preview from current local state). Phase 2
+  // commits via the API. The visibility argument isn't used to compute the
+  // preview list (the list is "what's in this chapter") but is part of the
+  // signature so BulkActions can pass through what it'll commit.
+  function previewBulkChapter(
+    chapter: number,
+    visibility: Visibility
+  ): Array<{ entityType: string; entityId: string; name: string }> {
+    void visibility
+    if (!records) return []
+    return records
+      .filter((rec) => rec.reveal.chapterAssociation === chapter)
+      .map((rec) => ({
+        entityType: rec.reveal.entityType,
+        entityId: rec.reveal.entityId,
+        name: rec.entity.name,
+      }))
+  }
+
+  async function commitBulkChapter(chapter: number, v: Visibility) {
+    const priorByKey = new Map<string, Visibility>()
+    if (records) {
+      for (const rec of records) {
+        if (rec.reveal.chapterAssociation === chapter) {
+          priorByKey.set(
+            entityKey(rec.reveal.entityType, rec.reveal.entityId),
+            rec.reveal.visibility
+          )
+        }
+      }
+    }
     setRecords((rs) =>
       rs
         ? rs.map((rec) =>
@@ -286,7 +405,29 @@ export default function RevealManager() {
           )
         : rs
     )
-    return { updated: data.updated as number }
+    try {
+      const r = await fetch('/api/dm/reveals/bulk-chapter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chapter, visibility: v }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const data = await r.json()
+      return { updated: data.updated as number }
+    } catch {
+      setRecords((rs) =>
+        rs
+          ? rs.map((rec) => {
+              const k = entityKey(rec.reveal.entityType, rec.reveal.entityId)
+              const prior = priorByKey.get(k)
+              return prior !== undefined
+                ? { ...rec, reveal: { ...rec.reveal, visibility: prior } }
+                : rec
+            })
+          : rs
+      )
+      return null
+    }
   }
 
   function toggleType(t: EntityType) {
@@ -338,7 +479,8 @@ export default function RevealManager() {
       <BulkActions
         selectedCount={selected.size}
         onBulkVisibility={bulkVisibility}
-        onBulkChapter={bulkChapter}
+        onPreviewBulkChapter={previewBulkChapter}
+        onCommitBulkChapter={commitBulkChapter}
       />
 
       <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -377,6 +519,7 @@ export default function RevealManager() {
                     onCreateDetail={(t, c) => createDetail(record, t, c)}
                     onUpdateDetail={(id, patch) => updateDetail(record, id, patch)}
                     onDeleteDetail={(id) => deleteDetail(record, id)}
+                    onReorderDetails={(order) => reorderDetails(record, order)}
                   />
                 )}
               </div>

@@ -253,18 +253,138 @@ describe('RevealManager — Bulk Actions', () => {
     expect(screen.getByRole('button', { name: /Set Revealed/i })).toBeInTheDocument()
   })
 
-  it('chapter bulk action POSTs to the bulk-chapter endpoint', async () => {
+  it('chapter bulk: Preview shows affected entities WITHOUT making the API call', async () => {
+    // sampleRecord has chapterAssociation: 9, the default chapter selector value is 1.
+    // Switch to chapter 9 first, then preview.
     mockFetch([sampleRecord])
     render(<RevealManager />)
     await waitFor(() => screen.getByText('Baron Avarus'))
 
-    fireEvent.click(screen.getByRole('button', { name: /Preview and Apply/i }))
+    fireEvent.change(screen.getByLabelText(/Chapter for bulk action/i), {
+      target: { value: '9' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /^Preview$/i }))
+
+    // The preview region should appear listing the affected entity.
+    expect(screen.getByRole('region', { name: /Bulk chapter preview/i })).toBeInTheDocument()
+    // Apply / Cancel buttons should appear.
+    expect(screen.getByRole('button', { name: /^Apply/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Cancel$/i })).toBeInTheDocument()
+    // No POST should have happened yet.
+    const postBeforeApply = fetchCalls.find(
+      (c) => c.url === '/api/dm/reveals/bulk-chapter' && c.init?.method === 'POST'
+    )
+    expect(postBeforeApply).toBeUndefined()
+  })
+
+  it('chapter bulk: Apply (after Preview) POSTs to the bulk-chapter endpoint', async () => {
+    mockFetch([sampleRecord])
+    render(<RevealManager />)
+    await waitFor(() => screen.getByText('Baron Avarus'))
+
+    fireEvent.change(screen.getByLabelText(/Chapter for bulk action/i), {
+      target: { value: '9' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^Preview$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Apply/i }))
 
     await waitFor(() => {
       const post = fetchCalls.find(
         (c) => c.url === '/api/dm/reveals/bulk-chapter' && c.init?.method === 'POST'
       )
       expect(post).toBeDefined()
+    })
+  })
+
+  it('chapter bulk: Cancel dismisses the preview without committing', async () => {
+    mockFetch([sampleRecord])
+    render(<RevealManager />)
+    await waitFor(() => screen.getByText('Baron Avarus'))
+
+    fireEvent.change(screen.getByLabelText(/Chapter for bulk action/i), {
+      target: { value: '9' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^Preview$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Cancel$/i }))
+
+    expect(screen.queryByRole('region', { name: /Bulk chapter preview/i })).not.toBeInTheDocument()
+    const post = fetchCalls.find(
+      (c) => c.url === '/api/dm/reveals/bulk-chapter' && c.init?.method === 'POST'
+    )
+    expect(post).toBeUndefined()
+  })
+})
+
+describe('RevealManager — accessibility & keyboard', () => {
+  it('row expander button exposes aria-expanded', async () => {
+    mockFetch([sampleRecord])
+    render(<RevealManager />)
+    await waitFor(() => screen.getByText('Baron Avarus'))
+
+    const expander = screen.getByRole('button', { name: /Expand details for Baron Avarus/i })
+    expect(expander).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(expander)
+    // After expansion, the same button should report expanded=true and the
+    // accessible name should flip to "Collapse details for Baron Avarus".
+    const collapser = screen.getByRole('button', { name: /Collapse details for Baron Avarus/i })
+    expect(collapser).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('VisibilityToggle responds to ArrowRight / ArrowLeft to change selection', async () => {
+    mockFetch([sampleRecord]) // hidden by default
+    render(<RevealManager />)
+    await waitFor(() => screen.getByText('Baron Avarus'))
+
+    const radiogroup = screen.getByRole('radiogroup', { name: /Visibility/i })
+    // Hidden is selected initially.
+    expect(within(radiogroup).getByRole('radio', { name: /Hidden/i })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+    // Press ArrowRight on the radiogroup — should advance to Discovered.
+    fireEvent.keyDown(radiogroup, { key: 'ArrowRight' })
+    await waitFor(() => {
+      const patch = fetchCalls.find(
+        (c) =>
+          c.url === '/api/dm/reveals/npc/avarus' &&
+          c.init?.method === 'PATCH' &&
+          JSON.parse(String(c.init!.body)).visibility === 'discovered'
+      )
+      expect(patch).toBeDefined()
+    })
+  })
+})
+
+describe('RevealManager — optimistic UI rollback', () => {
+  // Use a focused fetch mock that succeeds for the initial GET but FAILS the
+  // mutation, so we can assert the local state rolls back.
+  function mockFetchWithFailingMutations(records: RevealRecord[]) {
+    fetchCalls = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string, init?: RequestInit) => {
+        fetchCalls.push({ url, init })
+        if (url === '/api/dm/reveals' && (!init || init.method === undefined)) {
+          return Promise.resolve(new Response(JSON.stringify(records), { status: 200 }))
+        }
+        // Every mutation fails.
+        return Promise.resolve(new Response(JSON.stringify({ error: 'nope' }), { status: 500 }))
+      })
+    )
+  }
+
+  it('visibility toggle rolls back when the API call fails', async () => {
+    mockFetchWithFailingMutations([sampleRecord]) // hidden
+    render(<RevealManager />)
+    await waitFor(() => screen.getByText('Baron Avarus'))
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Revealed' }))
+
+    // After the failed PATCH, the toggle should revert to hidden.
+    await waitFor(() => {
+      const radio = screen.getByRole('radio', { name: 'Hidden' })
+      expect(radio).toHaveAttribute('aria-checked', 'true')
     })
   })
 })

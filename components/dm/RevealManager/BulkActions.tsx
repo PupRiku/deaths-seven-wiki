@@ -3,10 +3,24 @@
 import { useState } from 'react'
 import type { Visibility } from './types'
 
+interface PreviewedEntity {
+  entityType: string
+  entityId: string
+  name: string
+}
+
 interface Props {
   selectedCount: number
   onBulkVisibility: (v: Visibility) => Promise<void>
-  onBulkChapter: (chapter: number, visibility: Visibility) => Promise<{ updated: number } | null>
+  // Two-step bulk-chapter:
+  // 1. onPreviewBulkChapter — pure local read, returns the entities that
+  //    WOULD change. No DB writes.
+  // 2. onCommitBulkChapter — actually commits the change.
+  onPreviewBulkChapter: (chapter: number, visibility: Visibility) => PreviewedEntity[]
+  onCommitBulkChapter: (
+    chapter: number,
+    visibility: Visibility
+  ) => Promise<{ updated: number } | null>
 }
 
 const VIS: Visibility[] = ['hidden', 'discovered', 'revealed']
@@ -19,11 +33,16 @@ const VIS_LABEL: Record<Visibility, string> = {
 export default function BulkActions({
   selectedCount,
   onBulkVisibility,
-  onBulkChapter,
+  onPreviewBulkChapter,
+  onCommitBulkChapter,
 }: Props) {
   const [chapter, setChapter] = useState(1)
   const [chapterVis, setChapterVis] = useState<Visibility>('discovered')
-  const [pendingPreview, setPendingPreview] = useState<string | null>(null)
+  // pendingPreview holds the entities the next "Apply" will affect.
+  // null = no preview is showing yet (button is "Preview"); array (even empty)
+  // = preview is staged and "Apply" / "Cancel" are showing.
+  const [pendingPreview, setPendingPreview] = useState<PreviewedEntity[] | null>(null)
+  const [appliedMessage, setAppliedMessage] = useState<string | null>(null)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -72,6 +91,7 @@ export default function BulkActions({
           background: 'var(--bg-base)',
           border: '0.5px solid var(--border)',
           borderRadius: 'var(--radius-md)',
+          flexWrap: 'wrap',
         }}
       >
         <span
@@ -85,7 +105,10 @@ export default function BulkActions({
         </span>
         <select
           value={chapter}
-          onChange={(e) => setChapter(Number(e.target.value))}
+          onChange={(e) => {
+            setChapter(Number(e.target.value))
+            setPendingPreview(null) // any change invalidates the preview
+          }}
           aria-label="Chapter for bulk action"
           className="search-input"
           style={{ width: '120px', padding: '0.35rem 0.5rem' }}
@@ -98,7 +121,10 @@ export default function BulkActions({
         </select>
         <select
           value={chapterVis}
-          onChange={(e) => setChapterVis(e.target.value as Visibility)}
+          onChange={(e) => {
+            setChapterVis(e.target.value as Visibility)
+            setPendingPreview(null)
+          }}
           aria-label="Visibility for chapter bulk action"
           className="search-input"
           style={{ width: '140px', padding: '0.35rem 0.5rem' }}
@@ -109,20 +135,101 @@ export default function BulkActions({
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={async () => {
-            const ok = await onBulkChapter(chapter, chapterVis)
-            if (ok) setPendingPreview(`Updated ${ok.updated} entities for Chapter ${chapter}.`)
-          }}
-        >
-          Preview and Apply
-        </button>
-        {pendingPreview && (
-          <span style={{ fontSize: '0.75rem', color: 'var(--cyan)' }}>{pendingPreview}</span>
+
+        {pendingPreview === null ? (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              setAppliedMessage(null)
+              setPendingPreview(onPreviewBulkChapter(chapter, chapterVis))
+            }}
+          >
+            Preview
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={async () => {
+                const result = await onCommitBulkChapter(chapter, chapterVis)
+                if (result) {
+                  setAppliedMessage(
+                    `Set ${result.updated} entit${result.updated === 1 ? 'y' : 'ies'} for Chapter ${chapter} to ${chapterVis}.`
+                  )
+                }
+                setPendingPreview(null)
+              }}
+            >
+              Apply ({pendingPreview.length})
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setPendingPreview(null)}
+            >
+              Cancel
+            </button>
+          </>
+        )}
+
+        {appliedMessage && (
+          <span style={{ fontSize: '0.75rem', color: 'var(--cyan)' }}>{appliedMessage}</span>
         )}
       </div>
+
+      {pendingPreview !== null && (
+        <div
+          role="region"
+          aria-label="Bulk chapter preview"
+          style={{
+            padding: '0.6rem 0.85rem',
+            background: 'var(--bg-surface)',
+            border: '0.5px dashed var(--purple)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-heading)',
+              fontSize: '0.6875rem',
+              letterSpacing: '0.1em',
+              color: 'var(--purple)',
+              marginBottom: '0.4rem',
+              textTransform: 'uppercase',
+            }}
+          >
+            Will set {pendingPreview.length} entit
+            {pendingPreview.length === 1 ? 'y' : 'ies'} for Chapter {chapter} to {chapterVis}
+          </div>
+          {pendingPreview.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', margin: 0 }}>
+              No entities are associated with Chapter {chapter}.
+            </p>
+          ) : (
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: '1.2rem',
+                fontSize: '0.8125rem',
+                color: 'var(--text-secondary)',
+                maxHeight: '160px',
+                overflowY: 'auto',
+              }}
+            >
+              {pendingPreview.map((e) => (
+                <li key={`${e.entityType}:${e.entityId}`}>
+                  <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>
+                    [{e.entityType}]
+                  </span>{' '}
+                  {e.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   )
 }

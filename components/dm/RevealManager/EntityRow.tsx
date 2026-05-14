@@ -56,6 +56,8 @@ export default function EntityRow({
       <button
         type="button"
         onClick={onExpand}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? 'Collapse' : 'Expand'} details for ${entity.name}`}
         style={{
           background: 'none',
           border: 'none',

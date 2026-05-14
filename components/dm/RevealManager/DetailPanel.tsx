@@ -19,6 +19,7 @@ interface Props {
     patch: { title?: string; content?: string; isRevealed?: boolean }
   ) => Promise<void>
   onDeleteDetail: (detailId: string) => Promise<void>
+  onReorderDetails: (order: string[]) => Promise<void>
 }
 
 function fieldLabel(name: string): string {
@@ -61,6 +62,7 @@ export default function DetailPanel({
   onCreateDetail,
   onUpdateDetail,
   onDeleteDetail,
+  onReorderDetails,
 }: Props) {
   const [discoveredName, setDiscoveredName] = useState(record.reveal.discoveredName ?? '')
   const [showPreview, setShowPreview] = useState(false)
@@ -119,6 +121,7 @@ export default function DetailPanel({
         details={record.customDetails}
         onUpdate={onUpdateDetail}
         onDelete={onDeleteDetail}
+        onReorder={onReorderDetails}
       />
 
       <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -257,6 +260,7 @@ function CustomDetailsList({
   details,
   onUpdate,
   onDelete,
+  onReorder,
 }: {
   details: EntityCustomDetail[]
   onUpdate: (
@@ -264,7 +268,19 @@ function CustomDetailsList({
     patch: { title?: string; content?: string; isRevealed?: boolean }
   ) => Promise<void>
   onDelete: (detailId: string) => Promise<void>
+  onReorder: (order: string[]) => Promise<void>
 }) {
+  function move(detailId: string, direction: -1 | 1) {
+    const idx = details.findIndex((d) => d.id === detailId)
+    if (idx < 0) return
+    const target = idx + direction
+    if (target < 0 || target >= details.length) return
+    const next = details.map((d) => d.id)
+    const [item] = next.splice(idx, 1)
+    next.splice(target, 0, item)
+    void onReorder(next)
+  }
+
   return (
     <div style={{ marginTop: '1rem' }}>
       <h4 style={sectionHeading()}>Custom details ({details.length})</h4>
@@ -272,12 +288,16 @@ function CustomDetailsList({
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>None yet.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {details.map((d) => (
+          {details.map((d, i) => (
             <CustomDetailRow
               key={d.id}
               detail={d}
+              isFirst={i === 0}
+              isLast={i === details.length - 1}
               onUpdate={(patch) => onUpdate(d.id, patch)}
               onDelete={() => onDelete(d.id)}
+              onMoveUp={() => move(d.id, -1)}
+              onMoveDown={() => move(d.id, 1)}
             />
           ))}
         </div>
@@ -288,12 +308,20 @@ function CustomDetailsList({
 
 function CustomDetailRow({
   detail,
+  isFirst,
+  isLast,
   onUpdate,
   onDelete,
+  onMoveUp,
+  onMoveDown,
 }: {
   detail: EntityCustomDetail
+  isFirst: boolean
+  isLast: boolean
   onUpdate: (patch: { title?: string; content?: string; isRevealed?: boolean }) => Promise<void>
   onDelete: () => Promise<void>
+  onMoveUp: () => void
+  onMoveDown: () => void
 }) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(detail.title)
@@ -309,6 +337,30 @@ function CustomDetailRow({
       }}
     >
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div
+          role="group"
+          aria-label="Reorder detail"
+          style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
+        >
+          <button
+            type="button"
+            aria-label={`Move "${detail.title}" up`}
+            disabled={isFirst}
+            onClick={onMoveUp}
+            style={iconButtonStyle(isFirst)}
+          >
+            ▲
+          </button>
+          <button
+            type="button"
+            aria-label={`Move "${detail.title}" down`}
+            disabled={isLast}
+            onClick={onMoveDown}
+            style={iconButtonStyle(isLast)}
+          >
+            ▼
+          </button>
+        </div>
         {editing ? (
           <input
             value={title}
@@ -390,5 +442,21 @@ function sectionHeading(): React.CSSProperties {
     color: 'var(--orange)',
     margin: '0 0 0.5rem 0',
     textTransform: 'uppercase',
+  }
+}
+
+function iconButtonStyle(disabled: boolean): React.CSSProperties {
+  return {
+    width: '20px',
+    height: '16px',
+    fontSize: '0.625rem',
+    lineHeight: '14px',
+    padding: 0,
+    border: '0.5px solid var(--border)',
+    borderRadius: '3px',
+    background: 'var(--bg-base)',
+    color: disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.4 : 1,
   }
 }
