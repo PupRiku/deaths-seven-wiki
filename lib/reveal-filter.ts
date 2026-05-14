@@ -3,7 +3,23 @@
 // Both the Player API (app/api/player/*) and the DM "See as Player" preview
 // call filterEntityForPlayer(). Anything that isn't returned here cannot be
 // seen by a player.
+//
+// What we DO NOT return at any tier:
+// - Source `entityId` (e.g. "the-aspirant", "king-kaelen", "relic-stone") —
+//   these are semantic and leak plot via the Network tab. We emit an opaque
+//   `pid` (deterministic SHA-256 prefix) instead.
+// - Source `tags` — DM-side tags include classifications like "boss",
+//   "sin host", "aspirant", "true reapers", "pride arc" which are spoilers
+//   in themselves. The data files have no concept of player-safe tags yet,
+//   so we omit tags entirely. (Add a separate `playerTags` field to data
+//   if/when player UI needs categorization.)
+//
+// What we DO NOT return at the discovered tier (tighter than revealed):
+// - Stat-block image (filenames are semantic — `/images/fizzle.png`)
+// - firstAppearance chapter (tells the player when an unknown NPC matters)
+// - Real name, description, role, personality, notes, statBlock, custom details
 
+import crypto from 'crypto'
 import type {
   NPC,
   ReferenceLocation,
@@ -17,6 +33,17 @@ import type {
 } from '@/types'
 
 type FilterableEntity = NPC | ReferenceLocation | Faction | Item
+
+// Deterministic per-(type, id) opaque ID. Stable across requests, but does
+// not reveal the source entityId. Truncated SHA-256 hex — collisions across
+// the small entity set are practically impossible.
+function opaquePid(entityType: EntityType, entityId: string): string {
+  return crypto
+    .createHash('sha256')
+    .update(`${entityType}:${entityId}`)
+    .digest('hex')
+    .slice(0, 16)
+}
 
 function isFieldRevealed(fields: EntityFieldReveal[], name: string): boolean {
   return fields.some((f) => f.fieldName === name && f.isRevealed)
@@ -68,23 +95,22 @@ function filterNpc(
 ): PlayerEntity | null {
   if (reveal.visibility === 'hidden') return null
 
+  const pid = opaquePid('npc', reveal.entityId)
+
   if (reveal.visibility === 'discovered') {
     return {
-      id: npc.id,
+      pid,
       entityType: 'npc',
       visibility: 'discovered',
       displayName: discoveredDisplayName(reveal),
       appearance: npc.appearance,
-      image: npc.statBlock?.image,
-      firstAppearance: npc.firstAppearance,
-      tags: npc.tags,
     }
   }
 
   // revealed
   const roleRevealed = isFieldRevealed(fields, 'role')
   return {
-    id: npc.id,
+    pid,
     entityType: 'npc',
     visibility: 'revealed',
     displayName: npc.name,
@@ -98,7 +124,6 @@ function filterNpc(
     status: npc.status,
     image: npc.statBlock?.image,
     firstAppearance: npc.firstAppearance,
-    tags: npc.tags,
     revealedFields: {
       role: roleRevealed ? npc.role : null,
       personality: isFieldRevealed(fields, 'personality') ? npc.personality : null,
@@ -120,21 +145,22 @@ function filterLocation(
 ): PlayerEntity | null {
   if (reveal.visibility === 'hidden') return null
 
+  const pid = opaquePid('location', reveal.entityId)
+
   if (reveal.visibility === 'discovered') {
     return {
-      id: loc.id,
+      pid,
       entityType: 'location',
       visibility: 'discovered',
       displayName: discoveredDisplayName(reveal),
       // Show the type ("City", "Dungeon", etc.) at discovered tier — that
       // is just structural metadata, not a spoiler.
       description: loc.type,
-      tags: loc.tags,
     }
   }
 
   return {
-    id: loc.id,
+    pid,
     entityType: 'location',
     visibility: 'revealed',
     displayName: loc.name,
@@ -144,7 +170,6 @@ function filterLocation(
     description: loc.description,
     sinArc: loc.sinArc,
     chapters: loc.chapters,
-    tags: loc.tags,
     revealedFields: {
       keyLocations: revealedArrayByIndex(fields, 'keyLocations', loc.keyLocations),
       npcsPresent:
@@ -167,21 +192,22 @@ function filterFaction(
 ): PlayerEntity | null {
   if (reveal.visibility === 'hidden') return null
 
+  const pid = opaquePid('faction', reveal.entityId)
+
   if (reveal.visibility === 'discovered') {
     return {
-      id: faction.id,
+      pid,
       entityType: 'faction',
       visibility: 'discovered',
       displayName: discoveredDisplayName(reveal),
       type: faction.type,
       alignment: faction.alignment,
       color: faction.color,
-      tags: faction.tags,
     }
   }
 
   return {
-    id: faction.id,
+    pid,
     entityType: 'faction',
     visibility: 'revealed',
     displayName: faction.name,
@@ -190,7 +216,6 @@ function filterFaction(
     alignment: faction.alignment,
     color: faction.color,
     description: faction.description,
-    tags: faction.tags,
     revealedFields: {
       leader: isFieldRevealed(fields, 'leader') ? faction.leader : null,
       founder: isFieldRevealed(fields, 'founder') ? faction.founder : null,
@@ -211,28 +236,28 @@ function filterItem(
 ): PlayerEntity | null {
   if (reveal.visibility === 'hidden') return null
 
+  const pid = opaquePid('item', reveal.entityId)
+
   if (reveal.visibility === 'discovered') {
     return {
-      id: item.id,
+      pid,
       entityType: 'item',
       visibility: 'discovered',
       // Discovered items use the in-world found name (discovered_name) —
       // never the true name.
       displayName: discoveredDisplayName(reveal),
       type: item.type,
-      tags: item.tags,
     }
   }
 
   return {
-    id: item.id,
+    pid,
     entityType: 'item',
     visibility: 'revealed',
     displayName: item.name,
     name: item.name,
     type: item.type,
     description: item.description,
-    tags: item.tags,
     revealedFields: {
       properties: revealedArrayByIndex(fields, 'properties', item.properties),
       notes: isFieldRevealed(fields, 'notes') ? item.notes : null,
@@ -250,8 +275,11 @@ export function filterEntityForPlayer(
   fields: EntityFieldReveal[],
   customDetails: EntityCustomDetail[]
 ): PlayerEntity | null {
-  // Defensive: only return data for this exact entity. If reveal/field rows
-  // somehow mix entities, drop the mismatched ones rather than leaking.
+  // Defensive: only return data for this exact entity. If the caller pairs
+  // the wrong entity object with a reveal row, OR passes field/detail rows
+  // belonging to a different entity, drop everything rather than leak.
+  if (entity.id !== reveal.entityId) return null
+
   const ownFields = fields.filter(
     (f) => f.entityType === entityType && f.entityId === reveal.entityId
   )

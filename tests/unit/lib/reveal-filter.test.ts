@@ -106,7 +106,7 @@ describe('filterEntityForPlayer - NPC', () => {
     expect(out).toBeNull()
   })
 
-  it('returns discovered shape: appearance + displayName + tags only', () => {
+  it('returns discovered shape: pid + appearance + displayName only — no name/role/description/tags/image/firstAppearance', () => {
     const out = filterEntityForPlayer(
       sampleNpc,
       'npc',
@@ -123,15 +123,52 @@ describe('filterEntityForPlayer - NPC', () => {
     expect(out!.entityType).toBe('npc')
     expect(out!.visibility).toBe('discovered')
     expect(out!.displayName).toBe('The Golden Man')
-    // Spoiler protection: name, role, description, personality, notes, statBlock must be absent
+    // Spoiler protection: every potentially-revealing field must be absent.
     const flat = out as unknown as Record<string, unknown>
+    expect(flat.id).toBeUndefined() // source id is never returned — pid only
     expect(flat.name).toBeUndefined()
     expect(flat.role).toBeUndefined()
     expect(flat.description).toBeUndefined()
     expect(flat.personality).toBeUndefined()
     expect(flat.revealedFields).toBeUndefined()
+    expect(flat.tags).toBeUndefined()
+    expect(flat.image).toBeUndefined()
+    expect(flat.firstAppearance).toBeUndefined()
     expect(flat.appearance).toBe(sampleNpc.appearance)
-    expect(flat.tags).toEqual(sampleNpc.tags)
+    // pid is opaque, deterministic, and does not equal the source id.
+    expect(typeof flat.pid).toBe('string')
+    expect(flat.pid).not.toBe(sampleNpc.id)
+    expect((flat.pid as string).length).toBeGreaterThan(0)
+  })
+
+  it('emits the same opaque pid for the same (entityType, entityId) across calls', () => {
+    const out1 = filterEntityForPlayer(
+      sampleNpc,
+      'npc',
+      reveal({ entityType: 'npc', entityId: 'avarus', visibility: 'discovered' }),
+      [],
+      []
+    )
+    const out2 = filterEntityForPlayer(
+      sampleNpc,
+      'npc',
+      reveal({ entityType: 'npc', entityId: 'avarus', visibility: 'revealed' }),
+      [],
+      []
+    )
+    expect(out1!.pid).toBe(out2!.pid)
+  })
+
+  it('returns null when entity.id does not match reveal.entityId (defensive)', () => {
+    const wrong: typeof sampleNpc = { ...sampleNpc, id: 'someone-else' }
+    const out = filterEntityForPlayer(
+      wrong,
+      'npc',
+      reveal({ entityType: 'npc', entityId: 'avarus', visibility: 'revealed' }),
+      [],
+      []
+    )
+    expect(out).toBeNull()
   })
 
   it('falls back to "???" for displayName when discovered_name is null', () => {
@@ -168,12 +205,12 @@ describe('filterEntityForPlayer - NPC', () => {
     expect(flat.alignment).toBe(sampleNpc.alignment)
     expect(flat.location).toBe(sampleNpc.location)
     expect(flat.status).toBe(sampleNpc.status)
-    // role: revealed â†’ present in both base and revealedFields
+    // role: revealed -> present in both base and revealedFields
     expect(flat.role).toBe(sampleNpc.role)
     expect(flat.revealedFields.role).toBe(sampleNpc.role)
-    // personality: not revealed â†’ null in revealedFields, NOT in base
+    // personality: not revealed -> null in revealedFields, NOT in base
     expect(flat.revealedFields.personality).toBeNull()
-    // statBlock: not revealed â†’ null in revealedFields
+    // statBlock: not revealed -> null in revealedFields
     expect(flat.revealedFields.stat_block).toBeNull()
   })
 

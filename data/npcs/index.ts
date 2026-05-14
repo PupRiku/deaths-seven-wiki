@@ -605,7 +605,7 @@ export const npcs: NPC[] = [
     alignment: 'Enemy',
     location: 'The Summit Mountain',
     arc: 'All (revealed Ch.17)',
-    appearance: "A thin, weathered human man in worn rags. Hollow cheeks, calm eyes. Initially appears as the pathetic prisoner from Cell 6. In later forms: changes shape constantly, the seven Sins manifesting around him.",
+    appearance: "A thin, weathered human man in worn travel-stained clothing. Hollow cheeks, weathered hands. Calm, attentive eyes. Stands very still.",
     description: "The man in Cell 6 of the Mountain Dungeon. The pathetic informant. The beggar who said 'Now go! And give that monster general hell for me.' He has been here the whole time. He designed their deaths. He designed their rebirths. He made two Relic Stones, implanted one in his own chest, and used the party to fill him with all seven Sins over the entire campaign.",
     personality: "Eleven years of patient planning. Genuinely curious about the party. Will answer questions honestly before the final fight — he has nothing to hide. 'I built you to.' The board in the lab could not draw Thorny. 'CANNOT CONFIRM VISUAL.'",
     notes: [

@@ -357,20 +357,29 @@ export interface ReferenceLocation {
 
 // What a player sees. Hidden entities never become a PlayerEntity — they are
 // simply absent from the API response.
+//
+// Spoiler-protection rules:
+// - `pid` is an opaque hash of (entityType, entityId), never the source ID.
+//   Source IDs like "the-aspirant" or "relic-stone" leak plot through the
+//   network tab even when the displayName is masked.
+// - `tags` are NEVER returned to players — source tags include
+//   classifications like "boss", "sin host", "aspirant", "true reapers",
+//   which are themselves spoilers.
+// - At discovered tier: only physical-observable info. No image, no chapter
+//   association, no name, no description.
+// - At revealed tier: full base data + revealedFields gated per individual
+//   field reveal.
 export interface PlayerEntityBase {
-  id: string
+  pid: string
   entityType: EntityType
   visibility: 'discovered' | 'revealed'
   displayName: string
-  tags: string[]
 }
 
 export interface PlayerNpcDiscovered extends PlayerEntityBase {
   entityType: 'npc'
   visibility: 'discovered'
   appearance: string
-  image?: string
-  firstAppearance: number
 }
 
 export interface PlayerNpcRevealed extends PlayerEntityBase {
