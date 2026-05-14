@@ -227,10 +227,22 @@ describe('GET /api/player/locations', () => {
     expect(data[0].description).toContain('MagiPunk')
     expect(data[0].revealedFields.keyLocations.length).toBe(1)
   })
+
+  it('revealed npcsPresent never leaks raw NPC source IDs (avarus, the-aspirant, etc.)', async () => {
+    // mountain-dungeon's source npcsPresent includes "the-aspirant".
+    await authedPlayer()
+    await setVisibility('location', 'mountain-dungeon', 'revealed')
+    await revealField('location', 'mountain-dungeon', 'npcsPresent')
+    const { GET } = await import('@/app/api/player/locations/route')
+    const res = await GET()
+    const body = JSON.stringify(await res.json())
+    expect(body).not.toContain('the-aspirant')
+    expect(body).not.toContain('avarus')
+  })
 })
 
 describe('GET /api/player/factions', () => {
-  it('discovered factions show type and alignment only', async () => {
+  it('discovered factions show type and alignment only — color absent (would leak sin via CSS var)', async () => {
     await authedPlayer()
     await setVisibility('faction', 'nova-sentinels', 'discovered', 'A friendly group')
     const { GET } = await import('@/app/api/player/factions/route')
@@ -240,9 +252,21 @@ describe('GET /api/player/factions', () => {
     expect(f.displayName).toBe('A friendly group')
     expect(f.type).toBe('Military / Intelligence')
     expect(f.alignment).toBe('Ally')
+    expect(f.color).toBeUndefined()
     expect(f.leader).toBeUndefined()
     expect(f.description).toBeUndefined()
     expect(f.name).toBeUndefined()
+  })
+
+  it('discovered factions never leak sin-themed CSS variables (e.g. var(--sin-envy)) via color', async () => {
+    await authedPlayer()
+    // house-argente has color: 'var(--sin-envy)' — the sin/arc leak vector.
+    await setVisibility('faction', 'house-argente', 'discovered', 'A noble house')
+    const { GET } = await import('@/app/api/player/factions/route')
+    const res = await GET()
+    const body = JSON.stringify(await res.json())
+    expect(body).not.toContain('sin-envy')
+    expect(body).not.toContain('--sin-')
   })
 
   it('revealed factions show description and gate leader/founder', async () => {

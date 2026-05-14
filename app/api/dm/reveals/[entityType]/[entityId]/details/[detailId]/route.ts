@@ -30,24 +30,38 @@ export async function PATCH(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
+  // Distinguish "field not provided" (omit) from "field provided with wrong
+  // type" (400). The previous `typeof === 'string'` check silently ignored
+  // wrong types, so { title: 123 } returned success without updating.
   const updates: string[] = []
   const args: (string | number | null)[] = []
-  if (typeof body.title === 'string') {
-    // Mirror the POST invariant — title must be non-empty after trimming.
+  if (body.title !== undefined) {
+    if (typeof body.title !== 'string') {
+      return NextResponse.json({ error: 'title must be a string' }, { status: 400 })
+    }
     if (!body.title.trim()) {
       return NextResponse.json({ error: 'title must not be blank' }, { status: 400 })
     }
     updates.push('title = ?')
     args.push(body.title)
   }
-  if (typeof body.content === 'string') {
+  if (body.content !== undefined) {
+    if (typeof body.content !== 'string') {
+      return NextResponse.json({ error: 'content must be a string' }, { status: 400 })
+    }
     if (!body.content.trim()) {
       return NextResponse.json({ error: 'content must not be blank' }, { status: 400 })
     }
     updates.push('content = ?')
     args.push(body.content)
   }
-  if (typeof body.isRevealed === 'boolean') {
+  if (body.isRevealed !== undefined) {
+    if (typeof body.isRevealed !== 'boolean') {
+      return NextResponse.json(
+        { error: 'isRevealed must be a boolean' },
+        { status: 400 }
+      )
+    }
     updates.push('is_revealed = ?')
     args.push(body.isRevealed ? 1 : 0)
     updates.push("revealed_at = CASE WHEN ? = 1 THEN datetime('now') ELSE NULL END")

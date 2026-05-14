@@ -285,12 +285,44 @@ describe('Custom details CRUD', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(typeof data.id).toBe('string')
+    // Server returns the assigned sort_order so the client doesn't have to
+    // guess; this protects optimistic UI from drift after deletes/reorders.
+    expect(data.sortOrder).toBe(0)
     const r = await memory.db!.execute(
       `SELECT title, content, sort_order FROM entity_custom_details WHERE entity_type = 'npc' AND entity_id = 'fizzle'`
     )
     expect(r.rows.length).toBe(1)
     expect(r.rows[0].title).toBe('A note')
     expect(Number(r.rows[0].sort_order)).toBe(0)
+  })
+
+  it('POST returns the next sort_order after non-contiguous deletes', async () => {
+    await authedDm()
+    // Pre-seed details with sort_orders 0, 1, 2 then delete the middle one
+    // so we have orders [0, 2] — non-contiguous.
+    for (const [id, order] of [['a', 0], ['b', 1], ['c', 2]] as const) {
+      await memory.db!.execute({
+        sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+              VALUES (?, 'npc', 'fizzle', ?, 'X', 0, ?)`,
+        args: [id, id, order],
+      })
+    }
+    await memory.db!.execute(`DELETE FROM entity_custom_details WHERE id = 'b'`)
+
+    const { POST } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/route'
+    )
+    const res = await POST(
+      new NextRequest('http://x', {
+        method: 'POST',
+        body: JSON.stringify({ title: 'New', content: 'Body' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    const data = await res.json()
+    // Must be MAX(2)+1 = 3, NOT length-1 = 2 (which would collide with 'c').
+    expect(data.sortOrder).toBe(3)
   })
 
   it('PATCH rejects blank/whitespace title (mirrors POST invariant)', async () => {
@@ -313,6 +345,63 @@ describe('Custom details CRUD', () => {
       { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle', detailId }) }
     )
     expect(res.status).toBe(400)
+  })
+
+  it('PATCH rejects wrong-typed title (e.g. number) instead of silently ignoring', async () => {
+    await authedDm()
+    const detailId = 'det-bad-title-type'
+    await memory.db!.execute({
+      sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+            VALUES (?, 'npc', 'fizzle', 'Old', 'Old', 0, 0)`,
+      args: [detailId],
+    })
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/[detailId]/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ title: 123, content: 'Body' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle', detailId }) }
+    )
+    expect(res.status).toBe(400)
+    // Confirm title is unchanged.
+    const r = await memory.db!.execute({
+      sql: `SELECT title FROM entity_custom_details WHERE id = ?`,
+      args: [detailId],
+    })
+    expect(r.rows[0].title).toBe('Old')
+  })
+
+  it('PATCH rejects wrong-typed isRevealed (e.g. string) instead of silently ignoring', async () => {
+    await authedDm()
+    const detailId = 'det-bad-revealed-type'
+    await memory.db!.execute({
+      sql: `INSERT INTO entity_custom_details (id, entity_type, entity_id, title, content, is_revealed, sort_order)
+            VALUES (?, 'npc', 'fizzle', 'Old', 'Old', 0, 0)`,
+      args: [detailId],
+    })
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/[detailId]/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ isRevealed: 'yes', title: 'New' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle', detailId }) }
+    )
+    expect(res.status).toBe(400)
+    const r = await memory.db!.execute({
+      sql: `SELECT title, is_revealed FROM entity_custom_details WHERE id = ?`,
+      args: [detailId],
+    })
+    // Whole request rejected — title also unchanged.
+    expect(r.rows[0].title).toBe('Old')
+    expect(Number(r.rows[0].is_revealed)).toBe(0)
   })
 
   it('PATCH rejects blank content (mirrors POST invariant)', async () => {
@@ -607,6 +696,44 @@ describe('PATCH /api/dm/reveals/:type/:id — discoveredName type validation', (
       { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
     )
     expect(res.status).toBe(400)
+  })
+
+  it('trims blank/whitespace discoveredName to NULL on save (so player sees ??? fallback)', async () => {
+    await authedDm()
+    await memory.db!.execute({
+      sql: `UPDATE entity_reveals SET discovered_name = 'Old' WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    const { PATCH } = await import('@/app/api/dm/reveals/[entityType]/[entityId]/route')
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ discoveredName: '   ' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(200)
+    const r = await memory.db!.execute({
+      sql: `SELECT discovered_name FROM entity_reveals WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    expect(r.rows[0].discovered_name).toBeNull()
+  })
+
+  it('trims surrounding whitespace from a real discoveredName', async () => {
+    await authedDm()
+    const { PATCH } = await import('@/app/api/dm/reveals/[entityType]/[entityId]/route')
+    await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ discoveredName: '  The Golden Man  ' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'avarus' }) }
+    )
+    const r = await memory.db!.execute({
+      sql: `SELECT discovered_name FROM entity_reveals WHERE entity_type = 'npc' AND entity_id = 'avarus'`,
+    })
+    expect(r.rows[0].discovered_name).toBe('The Golden Man')
   })
 
   it('still accepts null (clears the discovered_name)', async () => {

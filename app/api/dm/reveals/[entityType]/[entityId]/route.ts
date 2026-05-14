@@ -63,8 +63,12 @@ export async function PATCH(
   }
   if (discoveredName !== undefined) {
     updates.push('discovered_name = ?')
-    // Already validated above as string | null — no coercion needed.
-    args.push(discoveredName as string | null)
+    // Trim-and-nullify on save: blank/whitespace becomes null so the
+    // player-side fallback to "???" fires cleanly, and the DB never holds
+    // a meaningless empty-string discovered name. Already validated above
+    // as string | null.
+    const trimmed = typeof discoveredName === 'string' ? discoveredName.trim() : null
+    args.push(trimmed && trimmed.length > 0 ? trimmed : null)
   }
   updates.push("updated_at = datetime('now')")
 

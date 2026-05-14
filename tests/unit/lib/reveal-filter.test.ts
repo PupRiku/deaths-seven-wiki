@@ -171,6 +171,24 @@ describe('filterEntityForPlayer - NPC', () => {
     expect(out).toBeNull()
   })
 
+  it('falls back to "???" for displayName when discovered_name is blank or whitespace', () => {
+    for (const blank of [null, '', '   ', '\t\n']) {
+      const out = filterEntityForPlayer(
+        sampleNpc,
+        'npc',
+        reveal({
+          entityType: 'npc',
+          entityId: 'avarus',
+          visibility: 'discovered',
+          discoveredName: blank,
+        }),
+        [],
+        []
+      )
+      expect(out!.displayName).toBe('???')
+    }
+  })
+
   it('falls back to "???" for displayName when discovered_name is null', () => {
     const out = filterEntityForPlayer(
       sampleNpc,
@@ -351,6 +369,27 @@ describe('filterEntityForPlayer - Location', () => {
     expect(flat.revealedFields.keyLocations).toEqual(['The Fold', 'The Gilded Cage'])
     expect(flat.revealedFields.notes).toBeNull()
   })
+
+  it('revealed npcsPresent returns opaque pids, not raw NPC source IDs', () => {
+    const out = filterEntityForPlayer(
+      sampleLocation,
+      'location',
+      reveal({ entityType: 'location', entityId: 'gildmaw', visibility: 'revealed' }),
+      [field('location', 'gildmaw', 'npcsPresent', true)],
+      []
+    )
+    const flat = out as unknown as {
+      revealedFields: { npcsPresent: string[] | null }
+    }
+    expect(flat.revealedFields.npcsPresent).not.toBeNull()
+    // Source ids "avarus" must NOT appear in the response.
+    for (const id of flat.revealedFields.npcsPresent!) {
+      expect(id).not.toBe('avarus')
+      expect(typeof id).toBe('string')
+      expect(id.length).toBeGreaterThan(0)
+    }
+    expect(JSON.stringify(flat.revealedFields.npcsPresent)).not.toContain('avarus')
+  })
 })
 
 const sampleFaction: Faction = {
@@ -380,7 +419,7 @@ describe('filterEntityForPlayer - Faction', () => {
     ).toBeNull()
   })
 
-  it('discovered shape returns type, alignment, color but not leader or description', () => {
+  it('discovered shape returns type + alignment but not color, leader, or description', () => {
     const out = filterEntityForPlayer(
       sampleFaction,
       'faction',
@@ -396,7 +435,10 @@ describe('filterEntityForPlayer - Faction', () => {
     const flat = out as unknown as Record<string, unknown>
     expect(flat.type).toBe(sampleFaction.type)
     expect(flat.alignment).toBe(sampleFaction.alignment)
-    expect(flat.color).toBe(sampleFaction.color)
+    // color is intentionally absent at the discovered tier — source values
+    // include CSS variable names like `var(--sin-envy)` that leak the
+    // sin/arc association of the faction.
+    expect(flat.color).toBeUndefined()
     expect(flat.leader).toBeUndefined()
     expect(flat.description).toBeUndefined()
     expect(flat.name).toBeUndefined()

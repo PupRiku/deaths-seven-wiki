@@ -7,7 +7,9 @@
 // What we DO NOT return at any tier:
 // - Source `entityId` (e.g. "the-aspirant", "king-kaelen", "relic-stone") —
 //   these are semantic and leak plot via the Network tab. We emit an opaque
-//   `pid` (deterministic SHA-256 prefix) instead.
+//   deterministic `pid` (FNV-1a, see opaquePid below) instead. The same
+//   mapping is also applied to source IDs that appear inside revealed
+//   fields (e.g. location.npcsPresent).
 // - Source `tags` — DM-side tags include classifications like "boss",
 //   "sin host", "aspirant", "true reapers", "pride arc" which are spoilers
 //   in themselves. The data files have no concept of player-safe tags yet,
@@ -17,7 +19,11 @@
 // What we DO NOT return at the discovered tier (tighter than revealed):
 // - Stat-block image (filenames are semantic — `/images/fizzle.png`)
 // - firstAppearance chapter (tells the player when an unknown NPC matters)
+// - Faction `color` (CSS variable names like `var(--sin-envy)` leak the
+//   sin/arc association even when name is masked)
 // - Real name, description, role, personality, notes, statBlock, custom details
+// - Plot-revealing suffixes/qualifiers in the type field (we run
+//   safeTypeForDiscovered() which strips after `—` or `(`)
 
 import type {
   NPC,
@@ -95,7 +101,12 @@ function revealedCustomDetails(
 }
 
 function discoveredDisplayName(reveal: EntityReveal): string {
-  return reveal.discoveredName ?? '???'
+  // Normalize null/undefined AND any blank/whitespace value to "???". The
+  // PATCH endpoint already trims-and-nullifies on save, but this is a
+  // belt-and-suspenders so any pre-existing blank rows still render
+  // sensibly to the player.
+  const name = reveal.discoveredName?.trim()
+  return name && name.length > 0 ? name : '???'
 }
 
 // Strip plot-revealing qualifiers from a `type` string before showing it
@@ -199,9 +210,12 @@ function filterLocation(
     chapters: loc.chapters,
     revealedFields: {
       keyLocations: revealedArrayByIndex(fields, 'keyLocations', loc.keyLocations),
+      // Map source NPC IDs through the same opaquePid the npcs endpoint
+      // uses, so the player UI can cross-reference without leaking that
+      // this location is associated with e.g. "the-aspirant".
       npcsPresent:
         isFieldRevealed(fields, 'npcsPresent') && loc.npcsPresent
-          ? loc.npcsPresent
+          ? loc.npcsPresent.map((id) => opaquePid('npc', id))
           : null,
       notes: isFieldRevealed(fields, 'notes') ? loc.notes : null,
     },
@@ -231,7 +245,8 @@ function filterFaction(
       // ever grow plot suffixes (today's values are already clean).
       type: safeTypeForDiscovered(faction.type),
       alignment: faction.alignment,
-      color: faction.color,
+      // color is intentionally omitted at this tier — source values include
+      // CSS variable names like `var(--sin-envy)` that leak sin association.
     }
   }
 

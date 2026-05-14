@@ -421,6 +421,9 @@ export interface PlayerLocationRevealed extends PlayerEntityBase {
   chapters: number[]
   revealedFields: {
     keyLocations: string[]
+    // Opaque NPC pids, not raw source IDs. Player UI can cross-reference
+    // against /api/player/npcs by matching pid. Source IDs (e.g.
+    // "the-aspirant", "king-kaelen") are themselves spoilers.
     npcsPresent: string[] | null
     notes: string | null
   }
@@ -432,7 +435,9 @@ export interface PlayerFactionDiscovered extends PlayerEntityBase {
   visibility: 'discovered'
   type: string
   alignment: string
-  color: string
+  // No `color` at this tier — source values include CSS variable names like
+  // `var(--sin-envy)` that leak the sin/arc association of the faction.
+  // Color is only included at the revealed tier.
 }
 
 export interface PlayerFactionRevealed extends PlayerEntityBase {

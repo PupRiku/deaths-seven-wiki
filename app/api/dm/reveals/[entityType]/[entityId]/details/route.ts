@@ -63,5 +63,8 @@ export async function POST(
     args: [id, entityType, entityId, title, content, nextOrder],
   })
 
-  return NextResponse.json({ id, success: true })
+  // Return the actual assigned sort_order so the client's optimistic update
+  // matches the persisted value. The client used to assume `customDetails.length`
+  // which would diverge after deletes/reorders left non-contiguous orders.
+  return NextResponse.json({ id, sortOrder: nextOrder, success: true })
 }
