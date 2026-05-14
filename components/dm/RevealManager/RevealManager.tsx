@@ -97,14 +97,21 @@ export default function RevealManager() {
   async function setDiscoveredName(record: RevealRecord, name: string) {
     const key = entityKey(record.reveal.entityType, record.reveal.entityId)
     const prev = record.reveal.discoveredName
-    patchLocalReveal(key, { discoveredName: name || null })
+    // Apply the same trim-and-nullify the server uses, so the optimistic
+    // local state matches what the server will actually persist. Without
+    // this, "  Name  " would render until reload while DB / player API
+    // already had "Name", and "   " would render as whitespace while the
+    // server saved null.
+    const trimmed = name.trim()
+    const normalized = trimmed.length > 0 ? trimmed : null
+    patchLocalReveal(key, { discoveredName: normalized })
     try {
       const r = await fetch(
         `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ discoveredName: name || null }),
+          body: JSON.stringify({ discoveredName: normalized }),
         }
       )
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
