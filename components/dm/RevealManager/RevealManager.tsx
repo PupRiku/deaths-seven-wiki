@@ -187,7 +187,13 @@ export default function RevealManager() {
                       isRevealed: false,
                       revealedAt: null,
                       createdAt: new Date().toISOString(),
-                      sortOrder: rec.customDetails.length,
+                      // Use the server-assigned sort_order, not customDetails.length.
+                      // After deletes/reorders the existing orders can be
+                      // non-contiguous, so length-based guessing diverges from
+                      // what the server actually persisted.
+                      sortOrder: typeof data.sortOrder === 'number'
+                        ? data.sortOrder
+                        : rec.customDetails.length,
                     },
                   ],
                 }

@@ -229,6 +229,7 @@ function FieldRevealsList({
             </span>
             <FieldToggle
               isRevealed={f.isRevealed}
+              label={fieldLabel(f.fieldName)}
               onToggle={() => onToggle(f.fieldName, !f.isRevealed)}
             />
           </div>
@@ -240,16 +241,23 @@ function FieldRevealsList({
 
 function FieldToggle({
   isRevealed,
+  label,
   onToggle,
 }: {
   isRevealed: boolean
+  // What this toggle controls (e.g. "role", "notes[2]", or a custom detail
+  // title). Used to build a contextual aria-label so screen readers don't
+  // hear a list of identical "HIDDEN" / "REVEALED" buttons.
+  label: string
   onToggle: () => Promise<void>
 }) {
+  const action = isRevealed ? 'Hide' : 'Reveal'
   return (
     <button
       type="button"
       onClick={() => void onToggle()}
       aria-pressed={isRevealed}
+      aria-label={`${action} "${label}" — currently ${isRevealed ? 'revealed' : 'hidden'}`}
       style={{
         fontFamily: 'var(--font-heading)',
         fontSize: '0.6875rem',
@@ -385,6 +393,7 @@ function CustomDetailRow({
         )}
         <FieldToggle
           isRevealed={detail.isRevealed}
+          label={detail.title}
           onToggle={() => onUpdate({ isRevealed: !detail.isRevealed })}
         />
         <button
