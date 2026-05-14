@@ -237,6 +237,42 @@ describe('RevealManager — Detail Panel', () => {
       expect(body.content).toBe('Some content')
     })
   })
+
+  it('add-detail form preserves typed text when the POST fails', async () => {
+    // Init load returns the sample record; POST /details fails with 500.
+    fetchCalls = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string, init?: RequestInit) => {
+        fetchCalls.push({ url, init })
+        if (url === '/api/dm/reveals' && (!init || init.method === undefined)) {
+          return Promise.resolve(new Response(JSON.stringify([sampleRecord]), { status: 200 }))
+        }
+        if (url.endsWith('/details') && init?.method === 'POST') {
+          return Promise.resolve(
+            new Response(JSON.stringify({ error: 'nope' }), { status: 500 })
+          )
+        }
+        return Promise.resolve(new Response('{}', { status: 200 }))
+      })
+    )
+    const user = userEvent.setup()
+    render(<RevealManager />)
+    await waitFor(() => screen.getByText('Baron Avarus'))
+
+    fireEvent.click(screen.getByRole('button', { name: /Baron Avarus/i }))
+    const titleInput = screen.getByPlaceholderText('Title') as HTMLInputElement
+    const contentInput = screen.getByPlaceholderText('Content') as HTMLTextAreaElement
+    await user.type(titleInput, 'A precious note')
+    await user.type(contentInput, 'I do not want to retype this')
+    fireEvent.click(screen.getByRole('button', { name: /Add detail/i }))
+
+    // After the failed POST, the typed text must still be there for retry.
+    await waitFor(() => {
+      expect(titleInput.value).toBe('A precious note')
+      expect(contentInput.value).toBe('I do not want to retype this')
+    })
+  })
 })
 
 describe('RevealManager — Bulk Actions', () => {

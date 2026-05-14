@@ -158,16 +158,29 @@ export default function RevealManager() {
     }
   }
 
-  async function createDetail(record: RevealRecord, title: string, content: string) {
-    const r = await fetch(
-      `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}/details`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content }),
-      }
-    )
-    if (!r.ok) return
+  // Returns true on success, false on any failure. The form uses this so it
+  // only clears its inputs when the create actually persisted — a rejected
+  // POST (validation, network, 500, etc.) preserves the DM's typed text for
+  // retry instead of silently dropping it.
+  async function createDetail(
+    record: RevealRecord,
+    title: string,
+    content: string
+  ): Promise<boolean> {
+    let r: Response
+    try {
+      r = await fetch(
+        `/api/dm/reveals/${record.reveal.entityType}/${record.reveal.entityId}/details`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content }),
+        }
+      )
+    } catch {
+      return false
+    }
+    if (!r.ok) return false
     const data = await r.json()
     const key = entityKey(record.reveal.entityType, record.reveal.entityId)
     setRecords((rs) =>
@@ -201,6 +214,7 @@ export default function RevealManager() {
           )
         : rs
     )
+    return true
   }
 
   async function updateDetail(

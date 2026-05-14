@@ -13,7 +13,9 @@ interface Props {
   record: RevealRecord
   onPatchVisibilityName: (discoveredName: string) => Promise<void>
   onToggleField: (fieldName: string, isRevealed: boolean) => Promise<void>
-  onCreateDetail: (title: string, content: string) => Promise<void>
+  // Returns true on success, false on failure. Lets the form preserve typed
+  // input on rejected creates instead of clearing it.
+  onCreateDetail: (title: string, content: string) => Promise<boolean>
   onUpdateDetail: (
     detailId: string,
     patch: { title?: string; content?: string; isRevealed?: boolean }
@@ -158,9 +160,13 @@ export default function DetailPanel({
           className="btn btn-primary"
           disabled={!newTitle.trim() || !newContent.trim()}
           onClick={async () => {
-            await onCreateDetail(newTitle, newContent)
-            setNewTitle('')
-            setNewContent('')
+            // Only clear inputs if the create actually succeeded — preserve
+            // the DM's typed text for retry on validation/network failure.
+            const ok = await onCreateDetail(newTitle, newContent)
+            if (ok) {
+              setNewTitle('')
+              setNewContent('')
+            }
           }}
           style={{ alignSelf: 'flex-start' }}
         >
@@ -346,6 +352,22 @@ function CustomDetailRow({
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(detail.title)
   const [content, setContent] = useState(detail.content)
+  // Resync local edit state when the prop changes (e.g. parent rolled back
+  // a failed PATCH). React 19 store-previous-prop pattern, same as the
+  // discoveredName input above. Avoids the useEffect+setState anti-pattern
+  // that the project's lint config rejects. Without this, reopening edit
+  // mode after a rollback would surface the unsaved local state instead of
+  // the rendered (reverted) value.
+  const [prevTitleProp, setPrevTitleProp] = useState(detail.title)
+  if (prevTitleProp !== detail.title) {
+    setPrevTitleProp(detail.title)
+    setTitle(detail.title)
+  }
+  const [prevContentProp, setPrevContentProp] = useState(detail.content)
+  if (prevContentProp !== detail.content) {
+    setPrevContentProp(detail.content)
+    setContent(detail.content)
+  }
 
   return (
     <div
