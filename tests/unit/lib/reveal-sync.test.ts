@@ -172,4 +172,71 @@ describe('syncReveals', () => {
     expect(result.orphanedReveals[0].entityId).toBe('no-longer-exists')
     expect(warnings.length).toBe(1)
   })
+
+  it('updates chapter_association on existing rows when the data file changes', async () => {
+    // Initial sync — fizzle is firstAppearance: 1.
+    await syncReveals(db, { force: true, logger: { warn: () => {} } })
+    // Simulate the data file changing fizzle's chapter to 99 by manually
+    // poking the existing row to a wrong value, then resync.
+    await db.execute({
+      sql: `UPDATE entity_reveals SET chapter_association = 99 WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    const result = await syncReveals(db, { force: true, logger: { warn: () => {} } })
+    // The resync should detect the drift and restore from the data files.
+    expect(result.updatedChapterAssociations).toBeGreaterThan(0)
+    const r = await db.execute({
+      sql: `SELECT chapter_association FROM entity_reveals WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    expect(Number(r.rows[0].chapter_association)).toBe(1)
+  })
+
+  it('preserves DM-set visibility and discovered_name when updating chapter_association', async () => {
+    await syncReveals(db, { force: true, logger: { warn: () => {} } })
+    await db.execute({
+      sql: `UPDATE entity_reveals
+              SET visibility = 'revealed', discovered_name = 'A friend',
+                  chapter_association = 99
+            WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    await syncReveals(db, { force: true, logger: { warn: () => {} } })
+    const r = await db.execute({
+      sql: `SELECT visibility, discovered_name, chapter_association FROM entity_reveals WHERE entity_type = 'npc' AND entity_id = 'fizzle'`,
+    })
+    // chapter_association resynced, but DM-controlled fields untouched.
+    expect(r.rows[0].visibility).toBe('revealed')
+    expect(r.rows[0].discovered_name).toBe('A friend')
+    expect(Number(r.rows[0].chapter_association)).toBe(1)
+  })
+
+  it('detects stale field reveal rows when a field is no longer in the data files', async () => {
+    await syncReveals(db, { force: true, logger: { warn: () => {} } })
+    // Manually insert a stale field row that no longer matches any data.
+    await db.execute({
+      sql: `INSERT INTO entity_field_reveals (id, entity_type, entity_id, field_name, is_revealed)
+            VALUES (?, 'npc', 'fizzle', 'no_such_field', 1)`,
+      args: [crypto.randomUUID()],
+    })
+    const warnings: unknown[] = []
+    const result = await syncReveals(db, {
+      force: true,
+      logger: { warn: (...args) => warnings.push(args) },
+    })
+    expect(result.staleFieldRows.length).toBe(1)
+    expect(result.staleFieldRows[0].fieldName).toBe('no_such_field')
+    expect(warnings.length).toBe(1)
+  })
+
+  it('does not delete stale field rows (preserves DM state in case the field returns)', async () => {
+    await syncReveals(db, { force: true, logger: { warn: () => {} } })
+    await db.execute({
+      sql: `INSERT INTO entity_field_reveals (id, entity_type, entity_id, field_name, is_revealed)
+            VALUES (?, 'npc', 'fizzle', 'no_such_field', 1)`,
+      args: [crypto.randomUUID()],
+    })
+    await syncReveals(db, { force: true, logger: { warn: () => {} } })
+    const r = await db.execute({
+      sql: `SELECT field_name FROM entity_field_reveals WHERE entity_type = 'npc' AND entity_id = 'fizzle' AND field_name = 'no_such_field'`,
+    })
+    expect(r.rows.length).toBe(1)
+  })
 })

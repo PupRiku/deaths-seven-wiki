@@ -114,6 +114,8 @@ interface SyncOptions {
 interface SyncResult {
   insertedReveals: number
   insertedFields: number
+  updatedChapterAssociations: number
+  staleFieldRows: Array<{ entityType: string; entityId: string; fieldName: string }>
   orphanedReveals: Array<{ entityType: string; entityId: string }>
 }
 
@@ -122,17 +124,31 @@ export async function syncReveals(
   options: SyncOptions = {}
 ): Promise<SyncResult> {
   if (syncedThisProcess && !options.force && client === defaultDb) {
-    return { insertedReveals: 0, insertedFields: 0, orphanedReveals: [] }
+    return {
+      insertedReveals: 0,
+      insertedFields: 0,
+      updatedChapterAssociations: 0,
+      staleFieldRows: [],
+      orphanedReveals: [],
+    }
   }
 
   const logger = options.logger ?? console
   const specs = buildSpecs()
   let insertedReveals = 0
   let insertedFields = 0
+  let updatedChapterAssociations = 0
 
-  // Build the set of valid (type, id) keys so we can detect orphans.
+  // Build the set of valid (type, id) keys for orphan detection, plus a
+  // (type, id) → expected field-name set for stale-field detection.
   const liveKeys = new Set<string>(
     specs.map((s) => `${s.entityType}:${s.entityId}`)
+  )
+  const liveFieldsByEntity = new Map<string, Set<string>>(
+    specs.map((s) => [
+      `${s.entityType}:${s.entityId}`,
+      new Set(s.fieldNames),
+    ])
   )
 
   for (const spec of specs) {
@@ -147,7 +163,27 @@ export async function syncReveals(
         spec.chapterAssociation,
       ],
     })
-    if ((reveal.rowsAffected ?? 0) > 0) insertedReveals++
+    if ((reveal.rowsAffected ?? 0) > 0) {
+      insertedReveals++
+    } else {
+      // Row already exists — keep DM-controlled fields (visibility,
+      // discovered_name) but resync chapter_association from the data
+      // files, since that field is derived, not DM-edited.
+      const upd = await client.execute({
+        sql: `UPDATE entity_reveals
+                SET chapter_association = ?
+              WHERE entity_type = ? AND entity_id = ?
+                AND (chapter_association IS NOT ? OR (chapter_association IS NULL AND ? IS NOT NULL))`,
+        args: [
+          spec.chapterAssociation,
+          spec.entityType,
+          spec.entityId,
+          spec.chapterAssociation,
+          spec.chapterAssociation,
+        ],
+      })
+      if ((upd.rowsAffected ?? 0) > 0) updatedChapterAssociations++
+    }
 
     for (const field of spec.fieldNames) {
       const fieldRes = await client.execute({
@@ -182,6 +218,43 @@ export async function syncReveals(
     )
   }
 
+  // Find field reveal rows that no longer match any field in the data files
+  // (e.g. a note was deleted, a stat block was removed). We don't delete
+  // these either — preserves any DM-set state in case the field comes back
+  // — but warn so the DM can clean up if a row becomes permanently stale.
+  const existingFields = await client.execute(
+    `SELECT entity_type, entity_id, field_name FROM entity_field_reveals`
+  )
+  const staleFieldRows: Array<{
+    entityType: string
+    entityId: string
+    fieldName: string
+  }> = []
+  for (const row of existingFields.rows) {
+    const key = `${row.entity_type}:${row.entity_id}`
+    const liveSet = liveFieldsByEntity.get(key)
+    if (!liveSet) continue // already counted as orphan above
+    if (!liveSet.has(String(row.field_name))) {
+      staleFieldRows.push({
+        entityType: String(row.entity_type),
+        entityId: String(row.entity_id),
+        fieldName: String(row.field_name),
+      })
+    }
+  }
+  if (staleFieldRows.length > 0) {
+    logger.warn(
+      `[reveal-sync] ${staleFieldRows.length} stale field reveal row(s) — field removed from data files but reveal state retained:`,
+      staleFieldRows
+    )
+  }
+
   if (client === defaultDb) syncedThisProcess = true
-  return { insertedReveals, insertedFields, orphanedReveals: orphans }
+  return {
+    insertedReveals,
+    insertedFields,
+    updatedChapterAssociations,
+    staleFieldRows,
+    orphanedReveals: orphans,
+  }
 }
