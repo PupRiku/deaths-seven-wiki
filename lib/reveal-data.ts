@@ -52,11 +52,21 @@ export async function loadReveals(client: Client = defaultDb): Promise<{
   fields: EntityFieldReveal[]
   customDetails: EntityCustomDetail[]
 }> {
+  // Stable ordering across requests so the DM Reveal Manager and the player
+  // API don't jitter after inserts/deletes/query-plan changes. ORDER BY the
+  // PK fields (entity_type, entity_id) gives a deterministic sequence that
+  // doesn't depend on insertion timing.
   const [revealsRes, fieldsRes, detailsRes] = await Promise.all([
-    client.execute(`SELECT * FROM entity_reveals`),
-    client.execute(`SELECT * FROM entity_field_reveals`),
     client.execute(
-      `SELECT * FROM entity_custom_details ORDER BY sort_order ASC`
+      `SELECT * FROM entity_reveals ORDER BY entity_type ASC, entity_id ASC`
+    ),
+    client.execute(
+      `SELECT * FROM entity_field_reveals
+         ORDER BY entity_type ASC, entity_id ASC, field_name ASC`
+    ),
+    client.execute(
+      `SELECT * FROM entity_custom_details
+         ORDER BY entity_type ASC, entity_id ASC, sort_order ASC`
     ),
   ])
   return {
@@ -76,17 +86,22 @@ export async function loadRevealsByType(
   fields: EntityFieldReveal[]
   customDetails: EntityCustomDetail[]
 }> {
+  // Same stable ordering rationale as loadReveals — keeps the player API
+  // (/api/player/{npcs,locations,...}) deterministic across requests.
   const [revealsRes, fieldsRes, detailsRes] = await Promise.all([
     client.execute({
-      sql: `SELECT * FROM entity_reveals WHERE entity_type = ?`,
+      sql: `SELECT * FROM entity_reveals WHERE entity_type = ?
+              ORDER BY entity_id ASC`,
       args: [entityType],
     }),
     client.execute({
-      sql: `SELECT * FROM entity_field_reveals WHERE entity_type = ?`,
+      sql: `SELECT * FROM entity_field_reveals WHERE entity_type = ?
+              ORDER BY entity_id ASC, field_name ASC`,
       args: [entityType],
     }),
     client.execute({
-      sql: `SELECT * FROM entity_custom_details WHERE entity_type = ? ORDER BY sort_order ASC`,
+      sql: `SELECT * FROM entity_custom_details WHERE entity_type = ?
+              ORDER BY entity_id ASC, sort_order ASC`,
       args: [entityType],
     }),
   ])
@@ -114,7 +129,8 @@ export async function loadRevealForEntity(
       args: [entityType, entityId],
     }),
     client.execute({
-      sql: `SELECT * FROM entity_field_reveals WHERE entity_type = ? AND entity_id = ?`,
+      sql: `SELECT * FROM entity_field_reveals WHERE entity_type = ? AND entity_id = ?
+              ORDER BY field_name ASC`,
       args: [entityType, entityId],
     }),
     client.execute({

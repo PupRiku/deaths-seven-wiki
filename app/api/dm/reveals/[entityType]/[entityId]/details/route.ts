@@ -47,24 +47,33 @@ export async function POST(
     return NextResponse.json({ error: 'Entity not found' }, { status: 404 })
   }
 
-  // Place new detail at the end of the existing list.
-  const max = await db.execute({
-    sql: `SELECT COALESCE(MAX(sort_order), -1) AS m FROM entity_custom_details
-          WHERE entity_type = ? AND entity_id = ?`,
-    args: [entityType, entityId],
-  })
-  const nextOrder = Number((max.rows[0] as Record<string, unknown>).m) + 1
-
+  // Compute the next sort_order INLINE in the INSERT via subquery, so two
+  // concurrent POSTs can't both read the same MAX and produce duplicate
+  // orders. SQLite serializes writes per-database so the subquery + insert
+  // are evaluated atomically within a single statement.
   const id = crypto.randomUUID()
   await db.execute({
     sql: `INSERT INTO entity_custom_details
             (id, entity_type, entity_id, title, content, is_revealed, sort_order)
-          VALUES (?, ?, ?, ?, ?, 0, ?)`,
-    args: [id, entityType, entityId, title, content, nextOrder],
+          VALUES (
+            ?, ?, ?, ?, ?, 0,
+            (SELECT COALESCE(MAX(sort_order), -1) + 1
+               FROM entity_custom_details
+              WHERE entity_type = ? AND entity_id = ?)
+          )`,
+    args: [id, entityType, entityId, title, content, entityType, entityId],
   })
 
-  // Return the actual assigned sort_order so the client's optimistic update
-  // matches the persisted value. The client used to assume `customDetails.length`
-  // which would diverge after deletes/reorders left non-contiguous orders.
-  return NextResponse.json({ id, sortOrder: nextOrder, success: true })
+  // Read back the actually-assigned sort_order so the client's optimistic
+  // update matches the persisted value. The client used to assume
+  // `customDetails.length` which diverges after deletes leave non-contiguous
+  // orders; same problem applies to a second read of MAX().
+  const inserted = await db.execute({
+    sql: `SELECT sort_order FROM entity_custom_details WHERE id = ?`,
+    args: [id],
+  })
+  const sortOrder = Number(
+    (inserted.rows[0] as Record<string, unknown>).sort_order
+  )
+  return NextResponse.json({ id, sortOrder, success: true })
 }

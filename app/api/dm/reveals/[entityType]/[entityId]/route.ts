@@ -70,6 +70,15 @@ export async function PATCH(
     const trimmed = typeof discoveredName === 'string' ? discoveredName.trim() : null
     args.push(trimmed && trimmed.length > 0 ? trimmed : null)
   }
+  // Reject requests with no actual updatable fields (matches the
+  // detail-PATCH endpoint's contract). A misspelled field name or empty
+  // body would otherwise silently bump updated_at and look successful.
+  if (updates.length === 0) {
+    return NextResponse.json(
+      { error: 'No updatable fields provided' },
+      { status: 400 }
+    )
+  }
   updates.push("updated_at = datetime('now')")
 
   args.push(entityType, entityId)

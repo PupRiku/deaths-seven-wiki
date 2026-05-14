@@ -35,6 +35,18 @@ export async function PATCH(
     )
   }
 
+  // Refuse to reorder against a nonexistent entity. Without this, a request
+  // like `{ order: [] }` against an unknown id would fall through both
+  // empty-set checks below and silently 200, masking client/route bugs.
+  // Mirrors the entity-existence check that POST /details enforces.
+  const exists = await db.execute({
+    sql: `SELECT id FROM entity_reveals WHERE entity_type = ? AND entity_id = ? LIMIT 1`,
+    args: [entityType, entityId],
+  })
+  if (exists.rows.length === 0) {
+    return NextResponse.json({ error: 'Entity not found' }, { status: 404 })
+  }
+
   // Validate that the submitted order is an exact permutation of the
   // entity's current detail IDs — no missing IDs (would leave duplicate
   // sort_orders), no unknown IDs (silently ignored UPDATEs), no duplicates.

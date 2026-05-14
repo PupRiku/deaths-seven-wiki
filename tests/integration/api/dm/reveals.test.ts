@@ -44,6 +44,30 @@ async function authedDm() {
   cookieJar.entries.dm_session = sessionId
 }
 
+describe('GET /api/dm/reveals — stable ordering', () => {
+  it('returns reveals in deterministic (entity_type, entity_id) order across calls', async () => {
+    await (async () => {
+      const { sessionId } = await createTestDmSession(memory.db!)
+      cookieJar.entries.dm_session = sessionId
+    })()
+    const { GET } = await import('@/app/api/dm/reveals/route')
+    const res1 = await GET(new NextRequest('http://x/api/dm/reveals'))
+    const res2 = await GET(new NextRequest('http://x/api/dm/reveals'))
+    const data1 = await res1.json()
+    const data2 = await res2.json()
+    const order1 = data1.map((r: { reveal: { entityType: string; entityId: string } }) =>
+      `${r.reveal.entityType}:${r.reveal.entityId}`
+    )
+    const order2 = data2.map((r: { reveal: { entityType: string; entityId: string } }) =>
+      `${r.reveal.entityType}:${r.reveal.entityId}`
+    )
+    expect(order1).toEqual(order2)
+    // And verify it's actually sorted, not just deterministic-by-accident.
+    const sorted = [...order1].sort()
+    expect(order1).toEqual(sorted)
+  })
+})
+
 describe('GET /api/dm/reveals', () => {
   it('returns 401 without dm_session', async () => {
     const { GET } = await import('@/app/api/dm/reveals/route')
@@ -153,6 +177,20 @@ describe('PATCH /api/dm/reveals/:type/:id', () => {
       { params: Promise.resolve({ entityType: 'npc', entityId: 'nope' }) }
     )
     expect(res.status).toBe(404)
+  })
+
+  it('returns 400 when neither visibility nor discoveredName is provided', async () => {
+    await authedDm()
+    const { PATCH } = await import('@/app/api/dm/reveals/[entityType]/[entityId]/route')
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ misspelled: 'revealed' }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+    )
+    expect(res.status).toBe(400)
   })
 })
 
@@ -294,6 +332,38 @@ describe('Custom details CRUD', () => {
     expect(r.rows.length).toBe(1)
     expect(r.rows[0].title).toBe('A note')
     expect(Number(r.rows[0].sort_order)).toBe(0)
+  })
+
+  it('POST is race-free — concurrent creates produce distinct sort_orders, never duplicates', async () => {
+    await authedDm()
+    const { POST } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/route'
+    )
+    // Fire several POSTs in parallel for the same entity. The previous
+    // implementation (separate SELECT MAX then INSERT) could let two
+    // concurrent requests read the same MAX and emit duplicate orders.
+    const N = 5
+    const responses = await Promise.all(
+      Array.from({ length: N }, (_, i) =>
+        POST(
+          new NextRequest('http://x', {
+            method: 'POST',
+            body: JSON.stringify({ title: `note-${i}`, content: 'X' }),
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
+        )
+      )
+    )
+    for (const r of responses) expect(r.status).toBe(200)
+    const r = await memory.db!.execute(
+      `SELECT sort_order FROM entity_custom_details WHERE entity_id = 'fizzle' ORDER BY sort_order`
+    )
+    const orders = r.rows.map((row) => Number(row.sort_order))
+    // No duplicates.
+    expect(new Set(orders).size).toBe(N)
+    // Contiguous 0..N-1.
+    expect(orders).toEqual(Array.from({ length: N }, (_, i) => i))
   })
 
   it('POST returns the next sort_order after non-contiguous deletes', async () => {
@@ -563,6 +633,22 @@ describe('Custom details CRUD', () => {
       { params: Promise.resolve({ entityType: 'npc', entityId: 'fizzle' }) }
     )
     expect(res.status).toBe(400)
+  })
+
+  it('reorder PATCH returns 404 when the entity has no reveal row (even with empty order)', async () => {
+    await authedDm()
+    const { PATCH } = await import(
+      '@/app/api/dm/reveals/[entityType]/[entityId]/details/reorder/route'
+    )
+    const res = await PATCH(
+      new NextRequest('http://x', {
+        method: 'PATCH',
+        body: JSON.stringify({ order: [] }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      { params: Promise.resolve({ entityType: 'npc', entityId: 'no-such-entity' }) }
+    )
+    expect(res.status).toBe(404)
   })
 
   it('reorder PATCH rejects duplicate ids in the list', async () => {
